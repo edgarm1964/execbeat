@@ -24,24 +24,23 @@ import (
 )
 
 type Config struct {
-	Commands []ExecConfig          `config:"commands"`
+	Commands []ExecConfig `config:"commands"`
 }
 
 type ExecConfig struct {
-	Schedule         time.Duration `config:"schedule"`
-	Command          string        `config:"command"`
-	Args             string        `config:"args"`
-	DocumentType     string        `config:"document_type"`
-	Fields           common.MapStr `config:"fields"`
-	FieldsUnderRoot  bool          `config:"fields_under_root"`
+	Schedule        time.Duration `config:"schedule"`
+	Command         string        `config:"command"`
+	Args            string        `config:"args"`
+	DocumentType    string        `config:"document_type"`
+	Fields          common.MapStr `config:"fields"`
+	FieldsUnderRoot bool          `config:"fields_under_root"`
 }
 
-var DefaultConfig = Config{
-}
+var DefaultConfig = Config{}
 
 // Defaults for config variables which are not set
 const (
-	DefaultSchedule     time.Duration = 60 * time.Second
-	DefaultDocumentType string = "execbeat"
-	DefaultFieldsUnderRoot bool = false
+	DefaultSchedule        time.Duration = 60 * time.Second
+	DefaultDocumentType    string        = "execbeat"
+	DefaultFieldsUnderRoot bool          = false
 )

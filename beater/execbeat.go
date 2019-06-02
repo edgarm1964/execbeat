@@ -18,31 +18,31 @@
 package beater
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
-	"fmt"
 	"time"
-	"bytes"
+
 	// "log"
 	"strings"
-	"syscall"
 	"sync"
+	"syscall"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
 	"github.com/edgarm1964/execbeat/config"
-
 	// "github.com/aikxeed/dump"
 )
 
 // Execbeat configuration.
 type Execbeat struct {
-	done   chan bool
-	config config.Config
-	client beat.Client
+	done      chan bool
+	config    config.Config
+	client    beat.Client
 	waitGroup sync.WaitGroup
 }
 
@@ -54,7 +54,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	}
 
 	for i := range c.Commands {
-		if len (c.Commands[i].DocumentType) == 0 {
+		if len(c.Commands[i].DocumentType) == 0 {
 			c.Commands[i].DocumentType = config.DefaultDocumentType
 		}
 
@@ -85,12 +85,12 @@ func (bt *Execbeat) Run(b *beat.Beat) error {
 	}
 
 	// set up signals
-	bt.SetupSignals ()
+	bt.SetupSignals()
 
 	// start workers for all commands
 	for _, cmd := range c.Commands {
 		// create and start worker
-		go bt.CreateAndRunWorker (cmd)
+		go bt.CreateAndRunWorker(cmd)
 
 		bt.waitGroup.Add(1)
 	}
@@ -100,44 +100,44 @@ func (bt *Execbeat) Run(b *beat.Beat) error {
 
 	time.Sleep(200 * time.Millisecond)
 
-	close (bt.done)
+	close(bt.done)
 
-	bt.waitGroup.Wait ()
+	bt.waitGroup.Wait()
 
 	return nil
 }
 
 // create worker
-func (bt *Execbeat) CreateAndRunWorker (cfg config.ExecConfig) error {
+func (bt *Execbeat) CreateAndRunWorker(cfg config.ExecConfig) error {
 	var outb, errb bytes.Buffer
 	var err error
 	var cmd *exec.Cmd
 	var execCommand string
 
 	// mark goroutine finshed when worker ends
-	defer bt.waitGroup.Done ()
+	defer bt.waitGroup.Done()
 
-	logp.Info ("create worker for cmd: %s", strings.Trim (cfg.Command, " "))
+	logp.Info("create worker for cmd: %s", strings.Trim(cfg.Command, " "))
 	ticker := time.NewTicker(cfg.Schedule)
 
 	for {
 		// wait for either 'done' or ticker
 		select {
 		case <-bt.done:
-			logp.Info ("worker for cmd: %s finished", execCommand)
+			logp.Info("worker for cmd: %s finished", execCommand)
 			return nil
 		case <-ticker.C:
 		}
 
-		logp.Info ("wake up goroutine for cmd: %s", cfg.Command)
+		logp.Info("wake up goroutine for cmd: %s", cfg.Command)
 
 		// set up command to run
 		if len(cfg.Args) > 0 {
 			execCommand = cfg.Command + " " + cfg.Args
-			cmd = exec.Command (cfg.Command, cfg.Args)
+			cmd = exec.Command(cfg.Command, cfg.Args)
 		} else {
 			execCommand = cfg.Command
-			cmd = exec.Command (cfg.Command)
+			cmd = exec.Command(cfg.Command)
 		}
 
 		// attach buffers to stdout and stderr
@@ -149,28 +149,28 @@ func (bt *Execbeat) CreateAndRunWorker (cfg config.ExecConfig) error {
 		// possible that Run() returns with 'Operation not permitted'
 		// In that case add 'seccomp.enabled: false' to your
 		// configuration file
-		err = cmd.Run ()
+		err = cmd.Run()
 
 		if err != nil {
-			logp.Err ("Couldn't execute %s: %v. Maybe add 'seccomp.enabled: false' to the configuration file?", execCommand, err)
+			logp.Err("Couldn't execute %s: %v. Maybe add 'seccomp.enabled: false' to the configuration file?", execCommand, err)
 			return nil
 		}
 		exitcode := cmd.ProcessState.ExitCode()
-		logp.Info ("stdout: %s, stderr: %s, exitcode: %d\n",
-			    strings.Trim (outb.String(), " \n"),
-			    strings.Trim (errb.String(), " \n"),
-			    exitcode)
+		logp.Info("stdout: %s, stderr: %s, exitcode: %d\n",
+			strings.Trim(outb.String(), " \n"),
+			strings.Trim(errb.String(), " \n"),
+			exitcode)
 
-		fields := common.MapStr {
-			"command":	execCommand,
-			"stdout":	strings.Trim (outb.String(), " \n"),
-			"stderr":	strings.Trim (errb.String(), " \n"),
-			"exitCode":	exitcode,
+		fields := common.MapStr{
+			"command":  execCommand,
+			"stdout":   strings.Trim(outb.String(), " \n"),
+			"stderr":   strings.Trim(errb.String(), " \n"),
+			"exitCode": exitcode,
 		}
 
 		// If available, add custom fields
 		if cfg.Fields != nil {
-			if (cfg.FieldsUnderRoot) {
+			if cfg.FieldsUnderRoot {
 				// fields are to be placed at root
 				for k, v := range cfg.Fields {
 					fields[k] = v
@@ -184,7 +184,7 @@ func (bt *Execbeat) CreateAndRunWorker (cfg config.ExecConfig) error {
 		// create event
 		event := beat.Event{
 			Timestamp: time.Now(),
-			Fields: fields,
+			Fields:    fields,
 		}
 
 		// send event to end points
@@ -202,10 +202,10 @@ func (bt *Execbeat) CreateAndRunWorker (cfg config.ExecConfig) error {
 // interrupt service routine
 func (bt *Execbeat) SetupSignals() error {
 	// Set up signal channel
-	c := make (chan os.Signal)
+	c := make(chan os.Signal)
 
 	// Catch signals ^C, ^\ and 15 (TERM)
-	signal.Notify (c, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 
 	// create an anonymous blocking function that catches the
 	// signals and stops all other goroutines
@@ -215,18 +215,18 @@ func (bt *Execbeat) SetupSignals() error {
 		msg := "other"
 
 		switch s {
-			case os.Interrupt:
-				msg = "^C"
-			case syscall.SIGQUIT:
-				msg = "^\\"
-			case syscall.SIGTERM:
-				msg = "terminate"
+		case os.Interrupt:
+			msg = "^C"
+		case syscall.SIGQUIT:
+			msg = "^\\"
+		case syscall.SIGTERM:
+			msg = "terminate"
 		}
 
-		logp.Info ("Received signal %s, shutting down...\n", msg)
+		logp.Info("Received signal %s, shutting down...\n", msg)
 
 		// call Stop to signal other threads
-		bt.Stop ()
+		bt.Stop()
 	}()
 
 	// all done, return
