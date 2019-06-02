@@ -20,3 +20,7 @@ execbeat:
       # the type defines the document type these entries should be stored
       # in. Default: execbeat
       document_type: execbeat
+
+#
+# To be able to execute external commands, disable seccomp
+seccomp.enabled: false

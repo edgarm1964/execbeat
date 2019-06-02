@@ -1,3 +1,20 @@
+// Licensed to Elasticsearch B.V. under one or more contributor
+// license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright
+// ownership. Elasticsearch B.V. licenses this file to you under
+// the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package common
 
 import (
@@ -17,7 +34,6 @@ type Version struct {
 // NewVersion expects a string in the format:
 // major.minor.bugfix(-meta)
 func NewVersion(version string) (*Version, error) {
-
 	v := Version{
 		version: version,
 	}
@@ -58,6 +74,35 @@ func (v *Version) IsMajor(major int) bool {
 }
 
 // LessThan returns true if v is strictly smaller than v1. When comparing, the major,
+// minor, bugfix and pre-release numbers are compared in order.
+func (v *Version) LessThanOrEqual(withMeta bool, v1 *Version) bool {
+	if withMeta && v.version == v1.version {
+		return true
+	}
+	if v.Major < v1.Major {
+		return true
+	}
+	if v.Major == v1.Major {
+		if v.Minor < v1.Minor {
+			return true
+		}
+		if v.Minor == v1.Minor {
+			if v.Bugfix < v1.Bugfix {
+				return true
+			}
+			if v.Bugfix == v1.Bugfix {
+				if withMeta {
+					return v.metaIsLessThanOrEqual(v1)
+				} else {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// LessThan returns true if v is strictly smaller than v1. When comparing, the major,
 // minor and bugfix numbers are compared in order. The meta part is not taken into account.
 func (v *Version) LessThan(v1 *Version) bool {
 	if v.Major < v1.Major {
@@ -76,4 +121,17 @@ func (v *Version) LessThan(v1 *Version) bool {
 
 func (v *Version) String() string {
 	return v.version
+}
+
+func (v *Version) metaIsLessThanOrEqual(v1 *Version) bool {
+	if v.Meta == "" && v1.Meta == "" {
+		return true
+	}
+	if v.Meta == "" {
+		return false
+	}
+	if v1.Meta == "" {
+		return true
+	}
+	return v.Meta <= v1.Meta
 }

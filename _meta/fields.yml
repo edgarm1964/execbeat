@@ -1,26 +1,26 @@
 - key: execbeat
   title: execbeat
-  description: Contains information about the command execution.
+  description: Execbeat executes commands and sends the output(s) and exit code to elasticsearch or logstash.
   fields:
     - name: exec
       type: group
       fields:
         - name: command
-          type: keyword
+          type: text
           description: >
             The command executed by Execbeat.
 
         - name: stdout
-          type: keyword
+          type: text
           description: >
             Standard output produced by the command executed by Execbeat.
 
         - name: stderr
-          type: keyword
+          type: text
           description: >
             Standard error produced by the command executed by Execbeat.
 
         - name: exitCode
-          type: keyword
+          type: integer
           description: >
             Exit code of the command executed by Execbeat.
