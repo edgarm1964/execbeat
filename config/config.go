@@ -1,6 +1,3 @@
-// Config is put into a different package to prevent cyclic imports in case
-// it is needed in several locations
-
 // Copyright (c) 2019 Edgar Matzinger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Config is put into a different package to prevent cyclic imports in case
+// it is needed in several locations
 
 package config
 
