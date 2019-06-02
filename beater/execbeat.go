@@ -196,7 +196,7 @@ func (bt *Execbeat) CreateAndRunWorker (cfg config.ExecConfig) error {
 		errb.Reset()
 	}
 
-	return nil
+	// return nil
 }
 
 // interrupt service routine
