@@ -31,10 +31,12 @@ addons:
   apt:
     packages:
       - python-virtualenv
+  homebrew:
+    packages:
+      - python-virtualenv
 
 before_install:
   # Redo the travis setup but with the edgarm1964/execbeat path. This is needed so the package path is correct
-  - sudo apt-get install -y python-virtualenv || exit 2
   - mkdir -p $HOME/gopath/src/github.com/edgarm1964/execbeat
   - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/edgarm1964/execbeat/
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/edgarm1964/execbeat
@@ -47,6 +49,10 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
+
+  # install govendor
+  - go get github.com/kardianos/govendor
+  - go install github.com/kardianos/govendor
 
 install:
   - true
