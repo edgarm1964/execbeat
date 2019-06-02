@@ -1,7 +1,6 @@
 sudo: required
 # dist: xenial
 services:
-  - docker
 
 language: go
 
@@ -43,12 +42,6 @@ before_install:
   - chmod -R go-w $HOME/gopath/src/github.com/edgarm1964/execbeat
   - cd $HOME/gopath/src/github.com/edgarm1964/execbeat
   - make add-headers
-
-  # Docker-compose installation
-  - sudo rm /usr/local/bin/docker-compose || true
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
 
   # install govendor
   - go get github.com/kardianos/govendor

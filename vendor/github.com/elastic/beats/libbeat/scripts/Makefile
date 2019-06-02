@@ -115,18 +115,22 @@ endif
 
 .PHONY: check
 check: check-headers python-env prepare-tests ## @build Checks project and source code if everything is according to standard
-	@go vet ${GOPACKAGES}
-	@go get $(GOIMPORTS_REPO)
+	@echo 'checks done'
+	go vet ${GOPACKAGES}
+	go get $(GOIMPORTS_REPO)
+	@echo 'go vet & go get done'
 	@goimports -local ${GOIMPORTS_LOCAL_PREFIX} -l ${GOFILES_NOVENDOR} | (! grep .) || (echo "Code differs from goimports' style ^" && false)
 	@${FIND} -name '*.py' -exec autopep8 -d --max-line-length 120  {} \; | (! grep . -q) || (echo "Code differs from autopep8's style" && false)
 	@${FIND} -wholename "*tests/system/test_*.py" -perm ${PERM_EXEC} -exec false {} + || (echo "Python test files shouldn't be executable, otherwise nose doesn't find them" && false)
 	@${FIND} -name "*.yml" -perm ${PERM_EXEC} -exec false {} + || (echo "YAML files should not be executable" && false)
+	@echo 'check done'
 
 .PHONY: check-headers
 check-headers:
 ifndef CHECK_HEADERS_DISABLED
 	@go get github.com/elastic/go-licenser
 	@go-licenser -d -license ${LICENSE}
+	@echo 'check-headers done'
 endif
 
 .PHONY: add-headers
@@ -256,6 +260,7 @@ python-env: ${ES_BEATS}/libbeat/tests/system/requirements.txt
 	fi
 	@# Work around pip bug. See: https://github.com/pypa/pip/issues/4464
 	@find ${PYTHON_ENV} -type d -name 'dist-packages' -exec sh -c "echo dist-packages > {}.pth" ';'
+	@echo 'check python-env done'
 
 .PHONY: test
 test: ## @testing Runs unit and system tests without coverage reports
@@ -319,7 +324,7 @@ fields: mage
 
 .PHONY: update
 update: ## @build Update expects the most recent version of libbeat in the GOPATH
-update: python-env fields collect
+update: python-env fields # collect
 	@echo "Updating generated files for ${BEAT_NAME}"
 
 	@mkdir -p _meta
