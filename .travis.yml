@@ -42,6 +42,7 @@ before_install:
   - chmod -R go-w $HOME/gopath/src/github.com/edgarm1964/execbeat
   - cd $HOME/gopath/src/github.com/edgarm1964/execbeat
   - make add-headers
+  - [[ $(uname -s) == "Darwin" ]] && pip2 install virtualenv
 
   # install govendor
   - go get github.com/kardianos/govendor
