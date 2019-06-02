@@ -34,6 +34,7 @@ addons:
 
 before_install:
   # Redo the travis setup but with the edgarm1964/execbeat path. This is needed so the package path is correct
+  - sudo apt-get install -y python-virtualenv || exit 2
   - mkdir -p $HOME/gopath/src/github.com/edgarm1964/execbeat
   - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/edgarm1964/execbeat/
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/edgarm1964/execbeat
