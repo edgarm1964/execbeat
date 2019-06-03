@@ -62,6 +62,10 @@ before_install:
   - go get github.com/kardianos/govendor
   - go install github.com/kardianos/govendor
 
+  # install osx specific elements
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && grep upgrade pyenv; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then pip install virtualenv; fi
+
 install:
   - true
 
