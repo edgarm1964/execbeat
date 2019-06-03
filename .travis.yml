@@ -25,6 +25,14 @@ matrix:
   exclude:
     - os: osx
       env: TARGETS="crosscompile"
+      python: "2.7"
+      before_install:
+          - pip install -U pip && pip install virtualenv
+          - brew update && brew upgrade pyenv
+          - pyenv install -f 2.7.15
+          - pip install virtualenv
+          - virtualenv -p ~/.pyenv/versions/2.7.15/bin/python ./env
+          - source env/bin/activate
 
 addons:
   apt:
@@ -42,7 +50,6 @@ before_install:
   - chmod -R go-w $HOME/gopath/src/github.com/edgarm1964/execbeat
   - cd $HOME/gopath/src/github.com/edgarm1964/execbeat
   - make add-headers
-  - [[ $(uname -s) == "Darwin" ]] && pip2 install virtualenv
 
   # install govendor
   - go get github.com/kardianos/govendor
