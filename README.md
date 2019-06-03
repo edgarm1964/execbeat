@@ -1,11 +1,7 @@
-[![Build Status](https://travis-ci.org/christiangalsterer/execbeat.svg?branch=master)](https://travis-ci.org/christiangalsterer/execbeat)
-[![codecov.io](http://codecov.io/github/christiangalsterer/execbeat/coverage.svg?branch=master)](http://codecov.io/github/christiangalsterer/execbeat?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/christiangalsterer/execbeat)](https://goreportcard.com/report/github.com/christiangalsterer/execbeat)
-[![license](https://img.shields.io/github/license/christiangalsterer/execbeat.svg)](https://github.com/christiangalsterer/execbeat)
-[![Github All Releases](https://img.shields.io/github/downloads/christiangalsterer/execbeat/total.svg)](https://github.com/christiangalsterer/execbeat)
+[![Build Status](https://travis-ci.org/edgarm1964/execbeat.svg?branch=master)](https://travis-ci.org/edgarm1964/execbeat)
 
-![Elastic Beats 5.6.2](https://img.shields.io/badge/Elastic%20Beats-v5.6.2-blue.svg)
-![Golang 1.9](https://img.shields.io/badge/Golang-v1.9-blue.svg)
+![Elastic Beats 6.5.1](https://img.shields.io/badge/Elastic%20Beats-v6.5.1-blue.svg)
+![Golang 1.12](https://img.shields.io/badge/Golang-v1.12-blue.svg)
 
 # Overview
 
@@ -16,7 +12,7 @@ Execbeat is inspired by the Logstash [exec](https://www.elastic.co/guide/en/logs
 This is often necessary in security restricted network setups, where Logstash is not able to reach all servers. Instead the server to be monitored itself has Execbeat installed and can send the data or a collector server has Execbeat installed which is deployed in the secured network environment and can reach all servers to be monitored.
 
 Ensure that this folder is at the following location:
-`${GOPATH}/src/github.com/christiangalsterer`
+`${GOPATH}/src/github.com/edgarm1964`
 
 ## Installation
 
@@ -39,7 +35,7 @@ Where supported Execbeat can be started also using the respetive service scripts
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.9
+* [Golang](https://golang.org/dl/) 1.12
 * [Glide](https://github.com/Masterminds/glide) >= 0.13.0
 
 ### Build
@@ -108,9 +104,9 @@ make clean
 To clone execbeat from the git repository, run the following commands:
 
 ```
-mkdir -p ${GOPATH}/github.com/christiangalsterer
-cd ${GOPATH}/github.com/christiangalsterer
-git clone https://github.com/christiangalsterer/execbeat
+mkdir -p ${GOPATH}/github.com/edgarm1964
+cd ${GOPATH}/github.com/edgarm1964
+git clone https://github.com/edgarm1964/execbeat
 ```
 
 For further development, check out the [beat developer guide](https://www.elastic.co/guide/en/beats/libbeat/current/new-beat.html).
