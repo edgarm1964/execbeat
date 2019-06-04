@@ -19,6 +19,7 @@ package beater
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -45,6 +46,10 @@ type Execbeat struct {
 	client    beat.Client
 	waitGroup sync.WaitGroup
 }
+
+var (
+	once = flag.Bool("once", false, "Run execbeat only once")
+)
 
 // New creates an instance of execbeat.
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
@@ -84,25 +89,32 @@ func (bt *Execbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	// set up signals
-	bt.SetupSignals()
+	if *once {
+		// start workers for all commands
+		for _, cmd := range c.Commands {
+			bt.RunWorkerOnce(cmd)
+		}
+	} else {
+		// set up signals
+		bt.SetupSignals()
 
-	// start workers for all commands
-	for _, cmd := range c.Commands {
-		// create and start worker
-		go bt.CreateAndRunWorker(cmd)
+		// start workers for all commands
+		for _, cmd := range c.Commands {
+			// create and start worker
+			go bt.CreateAndRunWorker(cmd)
 
-		bt.waitGroup.Add(1)
+			bt.waitGroup.Add(1)
+		}
+
+		// wait for done
+		<-bt.done
+
+		time.Sleep(200 * time.Millisecond)
+
+		close(bt.done)
+
+		bt.waitGroup.Wait()
 	}
-
-	// wait for done
-	<-bt.done
-
-	time.Sleep(200 * time.Millisecond)
-
-	close(bt.done)
-
-	bt.waitGroup.Wait()
 
 	return nil
 }
@@ -197,6 +209,82 @@ func (bt *Execbeat) CreateAndRunWorker(cfg config.ExecConfig) error {
 	}
 
 	// return nil
+}
+
+// run worker once
+func (bt *Execbeat) RunWorkerOnce(cfg config.ExecConfig) error {
+	var outb, errb bytes.Buffer
+	var err error
+	var cmd *exec.Cmd
+	var execCommand string
+
+	logp.Info("run worker once for cmd: %s", strings.Trim(cfg.Command, " "))
+
+	// set up command to run
+	if len(cfg.Args) > 0 {
+		execCommand = cfg.Command + " " + cfg.Args
+		cmd = exec.Command(cfg.Command, cfg.Args)
+	} else {
+		execCommand = cfg.Command
+		cmd = exec.Command(cfg.Command)
+	}
+
+	// attach buffers to stdout and stderr
+	cmd.Stdout = &outb
+	cmd.Stderr = &errb
+
+	// Run command
+	// As libbeat is now compiled with seccomp support, it is
+	// possible that Run() returns with 'Operation not permitted'
+	// In that case add 'seccomp.enabled: false' to your
+	// configuration file
+	err = cmd.Run()
+
+	if err != nil {
+		logp.Err("Couldn't execute %s: %v. Maybe add 'seccomp.enabled: false' to the configuration file?", execCommand, err)
+		return nil
+	}
+	exitcode := cmd.ProcessState.ExitCode()
+	logp.Info("stdout: %s, stderr: %s, exitcode: %d\n",
+		strings.Trim(outb.String(), " \n"),
+		strings.Trim(errb.String(), " \n"),
+		exitcode)
+
+	fields := common.MapStr{
+		"command":  execCommand,
+		"stdout":   strings.Trim(outb.String(), " \n"),
+		"stderr":   strings.Trim(errb.String(), " \n"),
+		"exitCode": exitcode,
+	}
+
+	// If available, add custom fields
+	if cfg.Fields != nil {
+		if cfg.FieldsUnderRoot {
+			// fields are to be placed at root
+			for k, v := range cfg.Fields {
+				fields[k] = v
+			}
+		} else {
+			// fields are to be added separate
+			fields["fields"] = cfg.Fields
+		}
+	}
+
+	// create event
+	// event := beat.Event{
+	//	Timestamp: time.Now(),
+	//	Fields:    fields,
+	//}
+
+	// send event to end points
+	// bt.client.Publish(event)
+	logp.Info("Event sent")
+
+	// reset buffers
+	outb.Reset()
+	errb.Reset()
+
+	return nil
 }
 
 // interrupt service routine

@@ -1,4 +1,8 @@
 [![Build Status](https://travis-ci.org/edgarm1964/execbeat.svg?branch=master)](https://travis-ci.org/edgarm1964/execbeat)
+[![codecov.io](http://codecov.io/github/christiangalsterer/execbeat/coverage.svg?branch=master)](http://codecov.io/github/christiangalsterer/execbeat?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/edgarm1964/execbeat)](https://goreportcard.com/report/github.com/edgarm1964/execbeat)
+[![license](https://img.shields.io/github/license/edgarm1964/execbeat.svg)](https://github.com/edgarm1964/execbeat)
+[![Github All Releases](https://img.shields.io/github/downloads/edgarm1864/execbeat/total.svg)](https://github.com/edgarm1864/execbeat)
 
 ![Elastic Beats 6.5.1](https://img.shields.io/badge/Elastic%20Beats-v6.5.1-blue.svg)
 ![Golang 1.12](https://img.shields.io/badge/Golang-v1.12-blue.svg)

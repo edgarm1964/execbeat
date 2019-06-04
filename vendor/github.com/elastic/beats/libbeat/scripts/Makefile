@@ -320,6 +320,7 @@ coverage-report:
 
 .PHONY: fields
 fields: mage
+	echo aap
 	@mage fields
 
 .PHONY: update

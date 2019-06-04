@@ -18,14 +18,26 @@
 package cmd
 
 import (
+	"flag"
+
 	"github.com/edgarm1964/execbeat/beater"
+	"github.com/spf13/pflag"
 
 	cmd "github.com/elastic/beats/libbeat/cmd"
-	"github.com/elastic/beats/libbeat/cmd/instance"
+	// "github.com/elastic/beats/libbeat/cmd/instance"
 )
 
 // Name of this beat
 var Name = "execbeat"
 
 // RootCmd to handle beats cli
-var RootCmd = cmd.GenRootCmdWithSettings(beater.New, instance.Settings{Name: Name})
+// var RootCmd = cmd.GenRootCmdWithSettings(beater.New, instance.Settings{Name: Name})
+// RootCmd to handle beats cli
+var RootCmd *cmd.BeatsRootCmd
+
+func init() {
+	var runFlags = pflag.NewFlagSet(Name, pflag.ExitOnError)
+	runFlags.AddGoFlag(flag.CommandLine.Lookup("once"))
+
+	RootCmd = cmd.GenRootCmdWithRunFlags(Name, "", beater.New, runFlags)
+}
