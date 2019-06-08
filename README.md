@@ -41,7 +41,7 @@ Adjust the `execbeat.yml` configuration file to your needs. You may take `execbe
 In order to start Execbeat please use the respective startup script, e.g. `/usr/bin/execbeat.sh`.
 
 ### Starting Execbeat as Service
-Where supported Execbeat can be started also using the respetive service scripts, e.g. `etc/init.d/execsbeat`.
+Where supported Execbeat can be started also using the respetive service scripts, e.g. `etc/init.d/execbeat`.
 
 ## Building and Releasing Execbeat
 
@@ -49,6 +49,7 @@ Where supported Execbeat can be started also using the respetive service scripts
 
 * [Golang](https://golang.org/dl/) 1.12
 * [Glide](https://github.com/Masterminds/glide) >= 0.13.0
+* [Mage](https://magefile.org) >= 1.8.0
 
 ### Build
 
