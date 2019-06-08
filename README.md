@@ -18,6 +18,14 @@ This is often necessary in security restricted network setups, where Logstash is
 Ensure that this folder is at the following location:
 `${GOPATH}/src/github.com/edgarm1964`
 
+## Build information
+
+Execbeat is tested against the following Beats versions and if execbeat was able to connect to a running Elastic Search instance or not.
+
+|Build against|Connect to ES 6.5.1|ES 7.0.0|ES 7.1.1|
+|----|----|----|----|----|
+|6.5.1|OK|Fails|N/T|
+
 ## Installation
 
 ### Download

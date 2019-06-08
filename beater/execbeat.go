@@ -19,7 +19,6 @@ package beater
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -46,10 +45,6 @@ type Execbeat struct {
 	client    beat.Client
 	waitGroup sync.WaitGroup
 }
-
-var (
-	once = flag.Bool("once", false, "Run execbeat only once")
-)
 
 // New creates an instance of execbeat.
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
@@ -89,32 +84,25 @@ func (bt *Execbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	if *once {
-		// start workers for all commands
-		for _, cmd := range c.Commands {
-			bt.RunWorkerOnce(cmd)
-		}
-	} else {
-		// set up signals
-		bt.SetupSignals()
+	// set up signals
+	bt.SetupSignals()
 
-		// start workers for all commands
-		for _, cmd := range c.Commands {
-			// create and start worker
-			go bt.CreateAndRunWorker(cmd)
+	// start workers for all commands
+	for _, cmd := range c.Commands {
+		// create and start worker
+		go bt.CreateAndRunWorker(cmd)
 
-			bt.waitGroup.Add(1)
-		}
-
-		// wait for done
-		<-bt.done
-
-		time.Sleep(200 * time.Millisecond)
-
-		close(bt.done)
-
-		bt.waitGroup.Wait()
+		bt.waitGroup.Add(1)
 	}
+
+	// wait for done
+	<-bt.done
+
+	time.Sleep(200 * time.Millisecond)
+
+	close(bt.done)
+
+	bt.waitGroup.Wait()
 
 	return nil
 }
