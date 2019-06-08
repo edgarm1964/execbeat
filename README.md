@@ -26,6 +26,8 @@ Execbeat is tested against the following Beats versions and if execbeat was able
 | ---- | ---- | ---- | ---- | ---- |
 | Beats 6.5.1 | OK | OK | Fails | N/T |
 
+N/T: Not Tested
+
 ## Installation
 
 ### Download
