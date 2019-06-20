@@ -12,6 +12,7 @@ This file is generated! See _meta/fields.yml and scripts/generate_field_docs.py
 This document describes the fields that are exported by Packetbeat. They are
 grouped in the following categories:
 
+* <<exported-fields-alias>>
 * <<exported-fields-amqp>>
 * <<exported-fields-beat>>
 * <<exported-fields-cassandra>>
@@ -38,6 +39,121 @@ grouped in the following categories:
 * <<exported-fields-trans_measurements>>
 
 --
+[[exported-fields-alias]]
+== Alias fields
+
+Alias fields for compatibility with 7.x.
+
+
+
+*`host.hostname`*::
++
+--
+type: alias
+
+alias to: beat.hostname
+
+--
+
+*`event.timezone`*::
++
+--
+type: alias
+
+alias to: beat.timezone
+
+--
+
+*`cloud.provider`*::
++
+--
+type: alias
+
+alias to: meta.cloud.provider
+
+--
+
+*`cloud.instance.id`*::
++
+--
+type: alias
+
+alias to: meta.cloud.instance_id
+
+--
+
+*`cloud.instance.name`*::
++
+--
+type: alias
+
+alias to: meta.cloud.instance_name
+
+--
+
+*`cloud.machine.type`*::
++
+--
+type: alias
+
+alias to: meta.cloud.machine_type
+
+--
+
+*`cloud.availability_zone`*::
++
+--
+type: alias
+
+alias to: meta.cloud.availability_zone
+
+--
+
+*`cloud.project.id`*::
++
+--
+type: alias
+
+alias to: meta.cloud.project_id
+
+--
+
+*`cloud.region`*::
++
+--
+type: alias
+
+alias to: meta.cloud.region
+
+--
+
+*`container.id`*::
++
+--
+type: alias
+
+alias to: docker.container.id
+
+--
+
+*`container.name`*::
++
+--
+type: alias
+
+alias to: docker.container.name
+
+--
+
+*`container.image.name`*::
++
+--
+type: alias
+
+alias to: docker.container.image
+
+--
+
 [[exported-fields-amqp]]
 == AMQP fields
 
@@ -2684,12 +2800,42 @@ Host architecture (e.g. x86_64, arm, ppc, mips).
 
 --
 
+*`host.containerized`*::
++
+--
+type: boolean
+
+If the host is a container.
+
+
+--
+
 *`host.os.platform`*::
 +
 --
 type: keyword
 
 OS platform (e.g. centos, ubuntu, windows).
+
+
+--
+
+*`host.os.name`*::
++
+--
+type: keyword
+
+Operating system name (e.g. "Mac OS X").
+
+
+--
+
+*`host.os.build`*::
++
+--
+type: keyword
+
+OS build information (e.g. "18D109").
 
 
 --
@@ -3902,6 +4048,18 @@ TLS-specific event fields.
 
 
 
+*`tls.version`*::
++
+--
+type: keyword
+
+example: TLS 1.3
+
+The version of the TLS protocol used.
+
+
+--
+
 *`tls.handshake_completed`*::
 +
 --
@@ -4008,6 +4166,16 @@ Length of the session ticket, if provided, or an empty string to advertise suppo
 
 --
 
+*`tls.client_hello.extensions.supported_versions`*::
++
+--
+type: keyword
+
+List of TLS versions that the client is willing to use.
+
+
+--
+
 
 *`tls.server_hello.version`*::
 +
@@ -4060,6 +4228,16 @@ Negotiated application layer protocol
 type: keyword
 
 Used to announce that a session ticket will be provided by the server. Always an empty string.
+
+
+--
+
+*`tls.server_hello.extensions.supported_versions`*::
++
+--
+type: keyword
+
+Negotiated TLS version to be used.
 
 
 --

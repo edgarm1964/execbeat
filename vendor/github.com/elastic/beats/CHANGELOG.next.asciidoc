@@ -1,0 +1,113 @@
+// Use these for links to issue and pulls. Note issues and pulls redirect one to
+// each other on Github, so don't worry too much on using the right prefix.
+:issue: https://github.com/elastic/beats/issues/
+:pull: https://github.com/elastic/beats/pull/
+
+=== Beats version HEAD
+https://github.com/elastic/beats/compare/v6.7.2...6.8[Check the HEAD diff]
+
+==== Breaking changes
+
+*Affecting all Beats*
+
+*Auditbeat*
+
+*Filebeat*
+
+*Heartbeat*
+
+*Journalbeat*
+
+*Metricbeat*
+
+*Packetbeat*
+
+*Packetbeat*
+
+*Winlogbeat*
+
+*Functionbeat*
+
+
+==== Bugfixes
+
+*Affecting all Beats*
+
+*Auditbeat*
+
+- Package dataset: Log error when Homebrew is not installed. {pull}11667[11667]
+
+*Filebeat*
+
+- Fix goroutine leak happening when harvesters are dynamically stopped. {pull}11263[11263]
+- Fix initialization of the TCP input logger. {pull}11605[11605]
+
+*Heartbeat*
+
+*Journalbeat*
+
+*Metricbeat*
+
+*Packetbeat*
+
+*Winlogbeat*
+
+*Functionbeat*
+
+==== Added
+
+*Affecting all Beats*
+
+*Auditbeat*
+
+- Add support to the system package dataset for the SUSE OS family. {pull}11634[11634]
+
+*Filebeat*
+
+*Heartbeat*
+
+*Journalbeat*
+
+*Metricbeat*
+
+*Packetbeat*
+
+*Winlogbeat*
+
+*Functionbeat*
+
+==== Deprecated
+
+*Affecting all Beats*
+
+*Filebeat*
+
+*Heartbeat*
+
+*Journalbeat*
+
+*Metricbeat*
+
+*Packetbeat*
+
+*Winlogbeat*
+
+*Functionbeat*
+
+==== Known Issue
+
+*Affecting all Beats*
+
+*Filebeat*
+
+*Heartbeat*
+
+*Journalbeat*
+
+*Metricbeat*
+
+*Packetbeat*
+
+*Winlogbeat*
+
+*Functionbeat*

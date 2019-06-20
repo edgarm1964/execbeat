@@ -16,9 +16,9 @@ include::../include/what-happens.asciidoc[]
 [float]
 === Compatibility
 
-This module requires the
-{elasticsearch-plugins}/ingest-user-agent.html[ingest-user-agent] and
-{elasticsearch-plugins}/ingest-geoip.html[ingest-geoip] Elasticsearch plugins.
+With Elasticsearch < 6.7, this module requires the
+{plugins}/ingest-user-agent.html[ingest-user-agent] and
+{plugins}/ingest-geoip.html[ingest-geoip] Elasticsearch plugins.
 
 
 The +{modulename}+ module was tested with logs from versions 2.2.22 and 2.4.23.

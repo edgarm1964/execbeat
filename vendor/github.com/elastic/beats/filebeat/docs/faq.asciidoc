@@ -96,7 +96,7 @@ The index template might not be loaded correctly. See <<filebeat-template>>.
 
 If you have recently performed an operation that loads or parses custom, structured logs,
 you might need to refresh the index to make the fields available in Kibana. To refresh
-the index, use the {elasticsearch}/indices-refresh.html[refresh API]. For example:
+the index, use the {ref}/indices-refresh.html[refresh API]. For example:
 
 ["source","sh"]
 ----------------------------------------------------------------------
@@ -130,5 +130,5 @@ reached EOF or not. Note that this option can lead to data loss if the file is
 deleted before {beatname_uc} reaches the end of the file.
 
 
-include::../../libbeat/docs/faq-limit-bandwidth.asciidoc[]
-include::../../libbeat/docs/shared-faq.asciidoc[]
+include::{libbeat-dir}/docs/faq-limit-bandwidth.asciidoc[]
+include::{libbeat-dir}/docs/shared-faq.asciidoc[]

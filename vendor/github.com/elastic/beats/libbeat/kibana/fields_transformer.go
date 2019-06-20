@@ -137,6 +137,18 @@ func transformField(version *common.Version, f common.Field) (common.MapStr, com
 		field["searchable"] = false
 	}
 
+	if f.Type == "object" && f.Enabled != nil {
+		enabled := getVal(f.Enabled, true)
+		field["enabled"] = enabled
+		if !enabled {
+			field["aggregatable"] = false
+			field["analyzed"] = false
+			field["doc_values"] = false
+			field["indexed"] = false
+			field["searchable"] = false
+		}
+	}
+
 	if f.Type == "text" {
 		field["aggregatable"] = false
 	}
@@ -242,5 +254,7 @@ var (
 		"":             "string",
 		"geo_point":    "geo_point",
 		"date":         "date",
+		"ip":           "ip",
+		"boolean":      "boolean",
 	}
 )

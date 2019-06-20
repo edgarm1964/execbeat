@@ -80,9 +80,10 @@ PIP_INSTALL_PARAMS?=
 BUILDID?=$(shell git rev-parse HEAD) ## @Building The build ID
 VIRTUALENV_PARAMS?=
 INTEGRATION_TESTS?=
-FIND=. ${PYTHON_ENV}/bin/activate; find . -type f -not -path "*/vendor/*" -not -path "*/build/*" -not -path "*/.git/*"
+FIND?=. ${PYTHON_ENV}/bin/activate; find . -type f -not -path "*/vendor/*" -not -path "*/build/*" -not -path "*/.git/*"
 PERM_EXEC?=$(shell [ `uname -s` = "Darwin" ] && echo "+111" || echo "/a+x")
 XPACK_ONLY?=false
+XPACK_DIR=${ES_BEATS}/x-pack/${BEAT_NAME}
 
 ifeq ($(DOCKER_CACHE),0)
 	DOCKER_NOCACHE=--no-cache
@@ -115,22 +116,18 @@ endif
 
 .PHONY: check
 check: check-headers python-env prepare-tests ## @build Checks project and source code if everything is according to standard
-	@echo 'checks done'
-	go vet ${GOPACKAGES}
-	go get $(GOIMPORTS_REPO)
-	@echo 'go vet & go get done'
+	@go vet ${GOPACKAGES}
+	@go get $(GOIMPORTS_REPO)
 	@goimports -local ${GOIMPORTS_LOCAL_PREFIX} -l ${GOFILES_NOVENDOR} | (! grep .) || (echo "Code differs from goimports' style ^" && false)
 	@${FIND} -name '*.py' -exec autopep8 -d --max-line-length 120  {} \; | (! grep . -q) || (echo "Code differs from autopep8's style" && false)
 	@${FIND} -wholename "*tests/system/test_*.py" -perm ${PERM_EXEC} -exec false {} + || (echo "Python test files shouldn't be executable, otherwise nose doesn't find them" && false)
 	@${FIND} -name "*.yml" -perm ${PERM_EXEC} -exec false {} + || (echo "YAML files should not be executable" && false)
-	@echo 'check done'
 
 .PHONY: check-headers
 check-headers:
 ifndef CHECK_HEADERS_DISABLED
 	@go get github.com/elastic/go-licenser
 	@go-licenser -d -license ${LICENSE}
-	@echo 'check-headers done'
 endif
 
 .PHONY: add-headers
@@ -201,6 +198,11 @@ integration-tests: prepare-tests
 .PHONY: integration-tests-environment
 integration-tests-environment:  ## @testing Runs the integration inside a virtual environment. This can be run on any docker-machine (local, remote)
 integration-tests-environment: prepare-tests build-image
+	# If you want to get logs on CI when the `docker-compose` fails, you can
+	# add  `|| ${DOCKER_COMPOSE} logs --tail 200` after the command.
+	#
+	# This will make docker-compose command to display the logs on stdout on error, It's not enabled
+	# by default because it can create noise if the test inside the container fails.
 	${DOCKER_COMPOSE} run beat make integration-tests RACE_DETECTOR=$(RACE_DETECTOR) DOCKER_COMPOSE_PROJECT_NAME=${DOCKER_COMPOSE_PROJECT_NAME}
 
 # Runs the system tests
@@ -208,21 +210,13 @@ integration-tests-environment: prepare-tests build-image
 system-tests: ## @testing Runs the system tests
 system-tests: prepare-tests ${BEAT_NAME}.test python-env
 	. ${PYTHON_ENV}/bin/activate; INTEGRATION_TESTS=${INTEGRATION_TESTS} TESTING_ENVIRONMENT=${TESTING_ENVIRONMENT} DOCKER_COMPOSE_PROJECT_NAME=${DOCKER_COMPOSE_PROJECT_NAME} nosetests ${PYTHON_TEST_FILES} ${NOSETESTS_OPTIONS}
-	python ${ES_BEATS}/dev-tools/aggregate_coverage.py -o ${COVERAGE_DIR}/system.cov ./build/system-tests/run
+	python ${ES_BEATS}/dev-tools/aggregate_coverage.py -o ${COVERAGE_DIR}/system.cov ${BUILD_DIR}/system-tests/run
 
 # Runs the system tests
 .PHONY: system-tests-environment
 system-tests-environment:  ## @testing Runs the system tests inside a virtual environment. This can be run on any docker-machine (local, remote)
 system-tests-environment: prepare-tests build-image
 	${DOCKER_COMPOSE} run -e INTEGRATION_TESTS=1 -e TESTING_ENVIRONMENT=${TESTING_ENVIRONMENT} -e DOCKER_COMPOSE_PROJECT_NAME=${DOCKER_COMPOSE_PROJECT_NAME} beat make system-tests
-	#This is a hack to run x-pack/filebeat module tests
-	@XPACKBEAT="${ES_BEATS}/x-pack/${BEAT_NAME}" ; \
-	if [ -e "$$XPACKBEAT/tests/system" ] && [ $(XPACK_ONLY) = false ]; then \
-	    $(MAKE) -C ../x-pack/${BEAT_NAME} fields; \
-	    ${DOCKER_COMPOSE} run -e INTEGRATION_TESTS=1 -e MODULES_PATH="../../x-pack/${BEAT_NAME}/module" -e TESTING_ENVIRONMENT=${TESTING_ENVIRONMENT} -e DOCKER_COMPOSE_PROJECT_NAME=${DOCKER_COMPOSE_PROJECT_NAME} beat make -C "$$XPACKBEAT" ${BEAT_NAME}.test system-tests ; \
-	    $(MAKE) -C ../x-pack/${BEAT_NAME} fix-permissions; \
-	fi
-
 
 .PHONY: fast-system-tests
 fast-system-tests: ## @testing Runs system tests without coverage reports and in parallel
@@ -251,7 +245,7 @@ load-tests: ## @testing Runs load tests
 # Sets up the virtual python environment
 .PHONY: python-env
 python-env: ${ES_BEATS}/libbeat/tests/system/requirements.txt
-	@test -d ${PYTHON_ENV} || virtualenv ${VIRTUALENV_PARAMS} ${PYTHON_ENV}
+	@test -d ${PYTHON_ENV} || virtualenv $(if ${PYTHON_EXE},-p ${PYTHON_EXE}) ${VIRTUALENV_PARAMS} ${PYTHON_ENV}
 	@. ${PYTHON_ENV}/bin/activate && pip install ${PIP_INSTALL_PARAMS} -q --upgrade pip ; \
 	if [ -a ./tests/system/requirements.txt ] && [ ! ${ES_BEATS}/libbeat/tests/system/requirements.txt -ef ./tests/system/requirements.txt ] ; then \
 		. ${PYTHON_ENV}/bin/activate && pip install ${PIP_INSTALL_PARAMS} -qUr ${ES_BEATS}/libbeat/tests/system/requirements.txt -Ur ./tests/system/requirements.txt ; \
@@ -260,7 +254,6 @@ python-env: ${ES_BEATS}/libbeat/tests/system/requirements.txt
 	fi
 	@# Work around pip bug. See: https://github.com/pypa/pip/issues/4464
 	@find ${PYTHON_ENV} -type d -name 'dist-packages' -exec sh -c "echo dist-packages > {}.pth" ';'
-	@echo 'check python-env done'
 
 .PHONY: test
 test: ## @testing Runs unit and system tests without coverage reports
@@ -320,19 +313,20 @@ coverage-report:
 
 .PHONY: fields
 fields: mage
-	echo aap
 	@mage fields
 
+ifndef EXCLUDE_COMMON_UPDATE_TARGET
 .PHONY: update
-update: ## @build Update expects the most recent version of libbeat in the GOPATH
-update: python-env fields # collect
+update: python-env fields # collect ## @build Update expects the most recent version of libbeat in the GOPATH
 	@echo "Updating generated files for ${BEAT_NAME}"
 
 	@mkdir -p _meta
 	@# Update config files.
 	@cat _meta/beat.yml ${ES_BEATS}/libbeat/_meta/config.yml | sed -e "s/beatname/${BEAT_NAME}/g;s/beat-index-prefix/${BEAT_INDEX_PREFIX}/g" > ${BEAT_NAME}.yml
-	@chmod 0640 ${BEAT_NAME}.yml
-
+ifneq (,$(wildcard _meta/beat.docker.yml))
+	@cat _meta/beat.docker.yml ${ES_BEATS}/libbeat/_meta/config.docker.yml > ${BEAT_NAME}.docker.yml
+	@chmod 0640 ${BEAT_NAME}.yml ${BEAT_NAME}.docker.yml
+endif
 
 	@# Update reference config files.
 ifeq ($(BEAT_REF_YAML),true)
@@ -365,10 +359,15 @@ endif
 	@go run ${ES_BEATS}/dev-tools/cmd/kibana_index_pattern/kibana_index_pattern.go \
 	  -index '${BEAT_INDEX_PREFIX}-*' -beat ${BEAT_NAME} -fields $(PWD)/fields.yml \
 	  -version ${BEAT_VERSION} -out _meta/kibana.generated
+endif
 
 .PHONY: docs
 docs:  ## @build Builds the documents for the beat
-	sh ${ES_BEATS}/script/build_docs.sh ${BEAT_NAME} ${BEAT_PATH}/docs ${BUILD_DIR}
+	@if [ -d $(XPACK_DIR) ]; then \
+		sh ${ES_BEATS}/script/build_docs.sh ${BEAT_NAME} ${BEAT_PATH}/docs ${BUILD_DIR} ${XPACK_DIR}; \
+	else \
+		sh ${ES_BEATS}/script/build_docs.sh ${BEAT_NAME} ${BEAT_PATH}/docs ${BUILD_DIR}; \
+	fi
 
 .PHONY: docs-preview
 docs-preview:  ## @build Preview the documents for the beat in the browser

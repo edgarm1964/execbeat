@@ -18,12 +18,19 @@
 package http
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
+	"reflect"
 	"testing"
+	"time"
+
+	"github.com/elastic/beats/libbeat/common/file"
 
 	"github.com/stretchr/testify/require"
 
@@ -35,20 +42,22 @@ import (
 	"github.com/elastic/beats/libbeat/testing/mapvaltest"
 )
 
-func testRequest(t *testing.T, testURL string) beat.Event {
-	return testTLSRequest(t, testURL, "")
+func testRequest(t *testing.T, testURL string) *beat.Event {
+	return testTLSRequest(t, testURL, nil)
 }
 
 // testTLSRequest tests the given request. certPath is optional, if given
 // an empty string no cert will be set.
-func testTLSRequest(t *testing.T, testURL string, certPath string) beat.Event {
+func testTLSRequest(t *testing.T, testURL string, extraConfig map[string]interface{}) *beat.Event {
 	configSrc := map[string]interface{}{
 		"urls":    testURL,
 		"timeout": "1s",
 	}
 
-	if certPath != "" {
-		configSrc["ssl.certificate_authorities"] = certPath
+	if extraConfig != nil {
+		for k, v := range extraConfig {
+			configSrc[k] = v
+		}
 	}
 
 	config, err := common.NewConfigFrom(configSrc)
@@ -59,7 +68,8 @@ func testTLSRequest(t *testing.T, testURL string, certPath string) beat.Event {
 
 	job := jobs[0]
 
-	event, _, err := job.Run()
+	event := &beat.Event{}
+	_, err = job.Run(event)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, endpoints)
@@ -67,7 +77,7 @@ func testTLSRequest(t *testing.T, testURL string, certPath string) beat.Event {
 	return event
 }
 
-func checkServer(t *testing.T, handlerFunc http.HandlerFunc) (*httptest.Server, beat.Event) {
+func checkServer(t *testing.T, handlerFunc http.HandlerFunc) (*httptest.Server, *beat.Event) {
 	server := httptest.NewServer(handlerFunc)
 	defer server.Close()
 	event := testRequest(t, server.URL)
@@ -230,7 +240,8 @@ func TestLargeResponse(t *testing.T) {
 
 	job := jobs[0]
 
-	event, _, err := job.Run()
+	event := &beat.Event{}
+	_, err = job.Run(event)
 	require.NoError(t, err)
 
 	port, err := hbtest.ServerPort(server)
@@ -247,8 +258,10 @@ func TestLargeResponse(t *testing.T) {
 	)
 }
 
-func TestHTTPSServer(t *testing.T) {
-	server := httptest.NewTLSServer(hbtest.HelloWorldHandler(http.StatusOK))
+func runHTTPSServerCheck(
+	t *testing.T,
+	server *httptest.Server,
+	reqExtraConfig map[string]interface{}) {
 	port, err := hbtest.ServerPort(server)
 	require.NoError(t, err)
 
@@ -261,7 +274,21 @@ func TestHTTPSServer(t *testing.T) {
 	require.NoError(t, certFile.Close())
 	defer os.Remove(certFile.Name())
 
-	event := testTLSRequest(t, server.URL, certFile.Name())
+	mergedExtraConfig := map[string]interface{}{"ssl.certificate_authorities": certFile.Name()}
+	for k, v := range reqExtraConfig {
+		mergedExtraConfig[k] = v
+	}
+
+	// Sometimes the test server can take a while to start. Since we're only using this to test up statuses,
+	// we give it a few attempts to see if the server can come up before we run the real assertions.
+	var event *beat.Event
+	for i := 0; i < 10; i++ {
+		event = testTLSRequest(t, server.URL, mergedExtraConfig)
+		if v, err := event.GetValue("monitor.status"); err == nil && reflect.DeepEqual(v, "up") {
+			break
+		}
+		time.Sleep(time.Millisecond * 500)
+	}
 
 	mapvaltest.Test(
 		t,
@@ -272,6 +299,50 @@ func TestHTTPSServer(t *testing.T) {
 			respondingHTTPChecks(server.URL, http.StatusOK),
 		)),
 		event.Fields,
+	)
+}
+
+func TestHTTPSServer(t *testing.T) {
+	server := httptest.NewTLSServer(hbtest.HelloWorldHandler(http.StatusOK))
+
+	runHTTPSServerCheck(t, server, nil)
+}
+
+func TestHTTPSx509Auth(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	clientKeyPath := path.Join(wd, "testdata", "client_key.pem")
+	clientCertPath := path.Join(wd, "testdata", "client_cert.pem")
+
+	certReader, err := file.ReadOpen(clientCertPath)
+	require.NoError(t, err)
+
+	clientCertBytes, err := ioutil.ReadAll(certReader)
+	require.NoError(t, err)
+
+	clientCerts := x509.NewCertPool()
+	certAdded := clientCerts.AppendCertsFromPEM(clientCertBytes)
+	require.True(t, certAdded)
+
+	tlsConf := &tls.Config{
+		ClientAuth: tls.RequireAndVerifyClientCert,
+		ClientCAs:  clientCerts,
+		MinVersion: tls.VersionTLS12,
+	}
+	tlsConf.BuildNameToCertificate()
+
+	server := httptest.NewUnstartedServer(hbtest.HelloWorldHandler(http.StatusOK))
+	server.TLS = tlsConf
+	server.StartTLS()
+	defer server.Close()
+
+	runHTTPSServerCheck(
+		t,
+		server,
+		map[string]interface{}{
+			"ssl.certificate": clientCertPath,
+			"ssl.key":         clientKeyPath,
+		},
 	)
 }
 
@@ -316,4 +387,33 @@ func TestUnreachableJob(t *testing.T) {
 		)),
 		event.Fields,
 	)
+}
+
+func TestNXDomainJob(t *testing.T) {
+	host := "notadomain.notatld"
+	// Port 80 is sometimes omitted in logs a non-standard one is easier to validate
+	port := 1234
+	url := fmt.Sprintf("http://%s:%d", host, port)
+
+	event := testRequest(t, url)
+
+	validator := mapval.Strict(
+		mapval.MustCompile(mapval.Map{
+			"error": mapval.Map{
+				"message": mapval.IsStringContaining("no such host"),
+				"type":    "io",
+			},
+			"http": mapval.Map{
+				"url": fmt.Sprintf("http://%s:%d", host, port),
+			},
+			"monitor": mapval.Map{
+				"duration": mapval.Map{"us": mapval.IsDuration},
+				"host":     host,
+				"id":       fmt.Sprintf("http@http://%s:%d", host, port),
+				"scheme":   "http",
+				"status":   "down",
+			}, "resolve": mapval.Map{"host": host}, "tcp": mapval.Map{"port": uint16(port)},
+		}))
+
+	mapvaltest.Test(t, validator, event.Fields)
 }

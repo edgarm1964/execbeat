@@ -19,11 +19,12 @@ package stats
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/elastic/beats/libbeat/common/cfgwarn"
 	"github.com/elastic/beats/metricbeat/helper"
+	"github.com/elastic/beats/metricbeat/helper/elastic"
 	"github.com/elastic/beats/metricbeat/mb"
 	"github.com/elastic/beats/metricbeat/mb/parse"
 	"github.com/elastic/beats/metricbeat/module/kibana"
@@ -38,8 +39,9 @@ func init() {
 }
 
 const (
-	statsPath    = "api/stats"
-	settingsPath = "api/settings"
+	statsPath             = "api/stats"
+	settingsPath          = "api/settings"
+	usageCollectionPeriod = 24 * time.Hour
 )
 
 var (
@@ -52,18 +54,17 @@ var (
 
 // MetricSet type defines all fields of the MetricSet
 type MetricSet struct {
-	mb.BaseMetricSet
-	statsHTTP    *helper.HTTP
-	settingsHTTP *helper.HTTP
-	xPackEnabled bool
+	*kibana.MetricSet
+	statsHTTP            *helper.HTTP
+	settingsHTTP         *helper.HTTP
+	usageLastCollectedOn time.Time
+	isUsageExcludable    bool
 }
 
 // New create a new instance of the MetricSet
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	cfgwarn.Experimental("The " + base.FullyQualifiedName() + " metricset is experimental")
-
-	config := kibana.DefaultConfig()
-	if err := base.Module().UnpackConfig(&config); err != nil {
+	ms, err := kibana.NewMetricSet(base)
+	if err != nil {
 		return nil, err
 	}
 
@@ -77,7 +78,7 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		return nil, err
 	}
 
-	isStatsAPIAvailable, err := kibana.IsStatsAPIAvailable(kibanaVersion)
+	isStatsAPIAvailable := kibana.IsStatsAPIAvailable(kibanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -87,25 +88,21 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		return nil, fmt.Errorf(errorMsg, base.FullyQualifiedName(), kibana.StatsAPIAvailableVersion, kibanaVersion)
 	}
 
-	if config.XPackEnabled {
-		cfgwarn.Experimental("The experimental xpack.enabled flag in the " + base.FullyQualifiedName() + " metricset is enabled.")
-
+	if ms.XPackEnabled {
 		// Use legacy API response so we can passthru usage as-is
 		statsHTTP.SetURI(statsHTTP.GetURI() + "&legacy=true")
 	}
 
 	var settingsHTTP *helper.HTTP
-	if config.XPackEnabled {
-		cfgwarn.Experimental("The experimental xpack.enabled flag in the " + base.FullyQualifiedName() + " metricset is enabled.")
-
-		isSettingsAPIAvailable, err := kibana.IsSettingsAPIAvailable(kibanaVersion)
+	if ms.XPackEnabled {
+		isSettingsAPIAvailable := kibana.IsSettingsAPIAvailable(kibanaVersion)
 		if err != nil {
 			return nil, err
 		}
 
 		if !isSettingsAPIAvailable {
 			const errorMsg = "The %v metricset with X-Pack enabled is only supported with Kibana >= %v. You are currently running Kibana %v"
-			return nil, fmt.Errorf(errorMsg, base.FullyQualifiedName(), kibana.SettingsAPIAvailableVersion, kibanaVersion)
+			return nil, fmt.Errorf(errorMsg, ms.FullyQualifiedName(), kibana.SettingsAPIAvailableVersion, kibanaVersion)
 		}
 
 		settingsHTTP, err = helper.NewHTTP(base)
@@ -120,10 +117,11 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 	}
 
 	return &MetricSet{
-		base,
+		ms,
 		statsHTTP,
 		settingsHTTP,
-		config.XPackEnabled,
+		time.Time{},
+		kibana.IsUsageExcludable(kibanaVersion),
 	}, nil
 }
 
@@ -134,36 +132,65 @@ func (m *MetricSet) Fetch(r mb.ReporterV2) {
 	now := time.Now()
 
 	m.fetchStats(r, now)
-	if m.xPackEnabled {
+	if m.XPackEnabled {
 		m.fetchSettings(r, now)
 	}
 }
 
 func (m *MetricSet) fetchStats(r mb.ReporterV2, now time.Time) {
+	// Collect usage stats only once every usageCollectionPeriod
+	if m.isUsageExcludable {
+		origURI := m.statsHTTP.GetURI()
+		defer m.statsHTTP.SetURI(origURI)
+
+		shouldCollectUsage := m.shouldCollectUsage(now)
+		if shouldCollectUsage {
+			m.usageLastCollectedOn = now
+		}
+		m.statsHTTP.SetURI(origURI + "&exclude_usage=" + strconv.FormatBool(!shouldCollectUsage))
+	}
+
 	content, err := m.statsHTTP.FetchContent()
 	if err != nil {
-		r.Error(err)
+		elastic.ReportAndLogError(err, r, m.Log)
 		return
 	}
 
-	if m.xPackEnabled {
+	if m.XPackEnabled {
 		intervalMs := m.calculateIntervalMs()
-		eventMappingStatsXPack(r, intervalMs, now, content)
+		err = eventMappingStatsXPack(r, intervalMs, now, content)
+		if err != nil {
+			m.Log.Error(err)
+			return
+		}
 	} else {
-		eventMapping(r, content)
+		err = eventMapping(r, content)
+		if err != nil {
+			elastic.ReportAndLogError(err, r, m.Log)
+			return
+		}
 	}
 }
 
 func (m *MetricSet) fetchSettings(r mb.ReporterV2, now time.Time) {
 	content, err := m.settingsHTTP.FetchContent()
 	if err != nil {
+		m.Log.Error(err)
 		return
 	}
 
 	intervalMs := m.calculateIntervalMs()
-	eventMappingSettingsXPack(r, intervalMs, now, content)
+	err = eventMappingSettingsXPack(r, intervalMs, now, content)
+	if err != nil {
+		m.Log.Error(err)
+		return
+	}
 }
 
 func (m *MetricSet) calculateIntervalMs() int64 {
 	return m.Module().Config().Period.Nanoseconds() / 1000 / 1000
+}
+
+func (m *MetricSet) shouldCollectUsage(now time.Time) bool {
+	return now.Sub(m.usageLastCollectedOn) > usageCollectionPeriod
 }

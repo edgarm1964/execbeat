@@ -86,12 +86,16 @@ output.elasticsearch:
   protocol: "https"
   username: "{beatname_lc}_internal"
   password: "{pwd}"
-
 ------------------------------------------------------------------------------
 
 
 For more information about securing {beatname_uc}, see
 <<securing-{beatname_lc}>>.
+
+If you are indexing large amounts of time-series data, you might also want to
+configure {beatname_uc} to use index lifecycle management. For more information
+about configuring and using index lifecycle management with {beatname_uc}, see
+<<ilm>>.
 
 ==== Compatibility
 
@@ -320,6 +324,15 @@ This configuration results in indices named `sev1`, `sev2`, and `sev3`.
 The `mappings` setting simplifies the configuration, but is limited to string
 values. You cannot specify format strings within the mapping pairs.
 
+//TODO: MOVE ILM OPTIONS TO APPEAR LOGICALLY BASED ON LOCATION IN THE YAML FILE.
+
+[[ilm-es]]
+===== `ilm`
+
+Configuration options for index lifecycle management. 
+
+See <<ilm>> for more information.
+
 ifndef::no-pipeline[]
 [[pipeline-option-es]]
 ===== `pipeline`
@@ -521,7 +534,7 @@ use in Logstash for indexing and filtering:
 }
 ------------------------------------------------------------------------------
 <1> {beatname_uc} uses the `@metadata` field to send metadata to Logstash. See the
-{logstashdoc}/event-dependent-configuration.html#metadata[Logstash documentation]
+{logstash-ref}/event-dependent-configuration.html#metadata[Logstash documentation]
 for more about the `@metadata` field.
 <2> The default is {beatname_lc}. To change this value, set the
 <<logstash-index,`index`>> option in the {beatname_uc} config file.
@@ -789,6 +802,7 @@ output.kafka:
 
 NOTE: Events bigger than <<kafka-max_message_bytes,`max_message_bytes`>> will be dropped. To avoid this problem, make sure {beatname_uc} does not generate events bigger than <<kafka-max_message_bytes,`max_message_bytes`>>.
 
+[[kafka-compatibility]]
 ==== Compatibility
 
 This output works with all Kafka versions in between 0.11 and 2.0.0. Older versions
@@ -812,11 +826,13 @@ The cluster metadata contain the actual Kafka brokers events are published to.
 
 ===== `version`
 
-Kafka version ${beatname_lc} is assumed to run against. Defaults to 1.0.0.
+Kafka version {beatname_lc} is assumed to run against. Defaults to 1.0.0.
 
 Event timestamps will be added, if version 0.10.0.0+ is enabled.
 
-Valid values are all kafka releases in between `0.8.2.0` and `1.1.1`.
+Valid values are all kafka releases in between `0.8.2.0` and `2.0.0`.
+
+See <<kafka-compatibility>> for information on supported versions.
 
 ===== `username`
 

@@ -32,9 +32,8 @@ import (
 // TemplateLoader is a subset of the Elasticsearch client API capable of
 // loading the template.
 type ESClient interface {
-	LoadJSON(path string, json map[string]interface{}) ([]byte, error)
 	Request(method, path string, pipeline string, params map[string]string, body interface{}) (int, []byte, error)
-	GetVersion() string
+	GetVersion() common.Version
 }
 
 type Loader struct {
@@ -65,7 +64,6 @@ func NewLoader(cfg *common.Config, client ESClient, beatInfo beat.Info, fields [
 // In case the template is not already loaded or overwriting is enabled, the
 // template is written to index
 func (l *Loader) Load() error {
-
 	tmpl, err := New(l.beatInfo.Version, l.beatInfo.IndexPrefix, l.client.GetVersion(), l.config)
 	if err != nil {
 		return fmt.Errorf("error creating template instance: %v", err)
@@ -79,7 +77,8 @@ func (l *Loader) Load() error {
 	exists := l.CheckTemplate(templateName)
 	if !exists || l.config.Overwrite {
 
-		logp.Info("Loading template for Elasticsearch version: %s", l.client.GetVersion())
+		version := l.client.GetVersion()
+		logp.Info("Loading template for Elasticsearch version: %s", version.String())
 		if l.config.Overwrite {
 			logp.Info("Existing template will be overwritten, as overwrite is enabled.")
 		}
@@ -138,7 +137,7 @@ func (l *Loader) Load() error {
 func (l *Loader) LoadTemplate(templateName string, template map[string]interface{}) error {
 	logp.Debug("template", "Try loading template with name: %s", templateName)
 	path := "/_template/" + templateName
-	body, err := l.client.LoadJSON(path, template)
+	body, err := loadJSON(l.client, path, template)
 	if err != nil {
 		return fmt.Errorf("couldn't load template: %v. Response body: %s", err, body)
 	}
@@ -150,10 +149,28 @@ func (l *Loader) LoadTemplate(templateName string, template map[string]interface
 // and only if Elasticsearch returns with HTTP status code 200.
 func (l *Loader) CheckTemplate(templateName string) bool {
 	status, _, _ := l.client.Request("HEAD", "/_template/"+templateName, "", nil, nil)
+	return status == 200
+}
 
-	if status != 200 {
-		return false
+func loadJSON(client ESClient, path string, json map[string]interface{}) ([]byte, error) {
+	params := esVersionParams(client.GetVersion())
+	status, body, err := client.Request("PUT", path, "", params, json)
+	if err != nil {
+		return body, fmt.Errorf("couldn't load json. Error: %s", err)
+	}
+	if status > 300 {
+		return body, fmt.Errorf("couldn't load json. Status: %v", status)
 	}
 
-	return true
+	return body, nil
+}
+
+func esVersionParams(ver common.Version) map[string]string {
+	if ver.Major == 6 && ver.Minor == 7 {
+		return map[string]string{
+			"include_type_name": "true",
+		}
+	}
+
+	return nil
 }

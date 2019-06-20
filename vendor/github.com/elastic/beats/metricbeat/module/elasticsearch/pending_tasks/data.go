@@ -40,14 +40,14 @@ var (
 	}
 )
 
-func eventsMapping(r mb.ReporterV2, content []byte) error {
+func eventsMapping(r mb.ReporterV2, info elasticsearch.Info, content []byte) error {
 	tasksStruct := struct {
 		Tasks []map[string]interface{} `json:"tasks"`
 	}{}
 
 	err := json.Unmarshal(content, &tasksStruct)
 	if err != nil {
-		err = errors.Wrap(err, "failure parsing Elasticsearch ML Job Stats API response")
+		err = errors.Wrap(err, "failure parsing Elasticsearch Pending Tasks API response")
 		r.Error(err)
 		return err
 	}
@@ -59,13 +59,20 @@ func eventsMapping(r mb.ReporterV2, content []byte) error {
 	var errs multierror.Errors
 	for _, task := range tasksStruct.Tasks {
 		event := mb.Event{}
-		event.MetricSetFields, err = schema.Apply(task)
-		if err != nil {
-			errs = append(errs, errors.Wrap(err, "failure applying task schema"))
-		}
 
 		event.RootFields = common.MapStr{}
 		event.RootFields.Put("service.name", elasticsearch.ModuleName)
+
+		event.ModuleFields = common.MapStr{}
+		event.ModuleFields.Put("cluster.name", info.ClusterName)
+		event.ModuleFields.Put("cluster.id", info.ClusterID)
+
+		event.MetricSetFields, err = schema.Apply(task)
+		if err != nil {
+			event.Error = errors.Wrap(err, "failure applying task schema")
+			errs = append(errs, event.Error)
+		}
+
 		r.Event(event)
 	}
 

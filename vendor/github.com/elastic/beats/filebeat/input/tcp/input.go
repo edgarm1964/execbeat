@@ -84,7 +84,7 @@ func NewInput(
 		started: false,
 		outlet:  out,
 		config:  &config,
-		log:     logp.NewLogger("tcp input").With(config.Config.Host),
+		log:     logp.NewLogger("tcp input").With("address", config.Config.Host),
 	}, nil
 }
 
@@ -126,6 +126,11 @@ func createEvent(raw []byte, metadata inputsource.NetworkMetadata) *util.Data {
 		Fields: common.MapStr{
 			"message": string(raw),
 			"source":  metadata.RemoteAddr.String(),
+			"log": common.MapStr{
+				"source": common.MapStr{
+					"address": metadata.RemoteAddr.String(),
+				},
+			},
 		},
 	}
 	return data

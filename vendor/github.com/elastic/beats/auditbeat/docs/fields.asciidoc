@@ -12,6 +12,7 @@ This file is generated! See _meta/fields.yml and scripts/generate_field_docs.py
 This document describes the fields that are exported by Auditbeat. They are
 grouped in the following categories:
 
+* <<exported-fields-alias>>
 * <<exported-fields-auditd>>
 * <<exported-fields-beat>>
 * <<exported-fields-cloud>>
@@ -20,8 +21,124 @@ grouped in the following categories:
 * <<exported-fields-file_integrity>>
 * <<exported-fields-host-processor>>
 * <<exported-fields-kubernetes-processor>>
+* <<exported-fields-system>>
 
 --
+[[exported-fields-alias]]
+== Alias fields
+
+Alias fields for compatibility with 7.x.
+
+
+
+*`host.hostname`*::
++
+--
+type: alias
+
+alias to: beat.hostname
+
+--
+
+*`event.timezone`*::
++
+--
+type: alias
+
+alias to: beat.timezone
+
+--
+
+*`cloud.provider`*::
++
+--
+type: alias
+
+alias to: meta.cloud.provider
+
+--
+
+*`cloud.instance.id`*::
++
+--
+type: alias
+
+alias to: meta.cloud.instance_id
+
+--
+
+*`cloud.instance.name`*::
++
+--
+type: alias
+
+alias to: meta.cloud.instance_name
+
+--
+
+*`cloud.machine.type`*::
++
+--
+type: alias
+
+alias to: meta.cloud.machine_type
+
+--
+
+*`cloud.availability_zone`*::
++
+--
+type: alias
+
+alias to: meta.cloud.availability_zone
+
+--
+
+*`cloud.project.id`*::
++
+--
+type: alias
+
+alias to: meta.cloud.project_id
+
+--
+
+*`cloud.region`*::
++
+--
+type: alias
+
+alias to: meta.cloud.region
+
+--
+
+*`container.id`*::
++
+--
+type: alias
+
+alias to: docker.container.id
+
+--
+
+*`container.name`*::
++
+--
+type: alias
+
+alias to: docker.container.name
+
+--
+
+*`container.image.name`*::
++
+--
+type: alias
+
+alias to: docker.container.image
+
+--
+
 [[exported-fields-auditd]]
 == Auditd fields
 
@@ -2761,6 +2878,14 @@ The name of the module that generated the event.
 
 --
 
+*`event.dataset`*::
++
+--
+The name of the module's dataset that generated the event.
+
+
+--
+
 *`event.action`*::
 +
 --
@@ -2770,6 +2895,155 @@ example: logged-in
 
 Action describes the change that triggered the event.
 For the file integrity module the possible values are: attributes_modified, created, deleted, updated, moved, and config_change.
+
+
+--
+
+*`event.id`*::
++
+--
+type: keyword
+
+example: 8a4f500d
+
+Unique ID to describe the event.
+
+
+--
+
+*`event.kind`*::
++
+--
+type: keyword
+
+example: state
+
+The kind of the event.
+This gives information about what type of information the event contains, without being specific to the contents of the event.  Examples are `event`, `state`, `alarm`. Warning: In future versions of ECS, we plan to provide a list of acceptable values for this field, please use with caution.
+
+
+--
+
+*`message`*::
++
+--
+type: text
+
+example: Hello World
+
+For log events the message field contains the log message.
+In other use cases the message field can be used to concatenate different values which are then freely searchable. If multiple messages exist, they can be combined into one message.
+
+
+--
+
+[float]
+== process fields
+
+These fields contain information about a process. These fields can help you correlate metrics information with a process id/name from a log message.  The `process.pid` often stays in the metric itself and is copied to the global field for correlation.
+
+
+
+*`process.start`*::
++
+--
+type: date
+
+example: 2016-05-23T08:05:34.853Z
+
+The time the process started.
+
+
+--
+
+*`process.working_directory`*::
++
+--
+type: keyword
+
+example: /home/alice
+
+The working directory of the process.
+
+
+--
+
+*`process.executable`*::
++
+--
+type: keyword
+
+example: /usr/bin/ssh
+
+Absolute path to the process executable.
+
+
+--
+
+*`network.type`*::
++
+--
+type: keyword
+
+example: IPv4
+
+In the OSI Model this would be the Network Layer. IPv4, IPv6, IPSec, PIM, etc
+
+
+--
+
+[float]
+== user fields
+
+The user fields describe information about the user that is relevant to  the event. Fields can have one entry or multiple entries. If a user has more than one id, provide an array that includes all of them.
+
+
+
+*`user.id`*::
++
+--
+type: keyword
+
+One or multiple unique identifiers of the user.
+
+
+--
+
+*`user.name`*::
++
+--
+type: keyword
+
+example: albert
+
+Short name or login of the user.
+
+
+--
+
+[float]
+== group fields
+
+The group fields are meant to represent groups that are relevant to the event.
+
+
+
+*`user.group.id`*::
++
+--
+type: keyword
+
+Unique identifier for the group on the system/platform.
+
+
+--
+
+*`user.group.name`*::
++
+--
+type: keyword
+
+Name of the group.
 
 
 --
@@ -2993,6 +3267,72 @@ type: keyword
 example: s0
 
 The object's SELinux level.
+
+--
+
+[float]
+== user fields
+
+User information.
+
+
+[float]
+== effective fields
+
+Effective user information.
+
+
+*`user.effective.id`*::
++
+--
+type: keyword
+
+Effective user ID.
+
+--
+
+[float]
+== group fields
+
+Effective group information.
+
+
+*`user.effective.group.id`*::
++
+--
+type: keyword
+
+Effective group ID.
+
+--
+
+[float]
+== saved fields
+
+Saved user information.
+
+
+*`user.saved.id`*::
++
+--
+type: keyword
+
+Saved user ID.
+
+--
+
+[float]
+== group fields
+
+Saved group information.
+
+
+*`user.saved.group.id`*::
++
+--
+type: keyword
+
+Saved group ID.
 
 --
 
@@ -3239,12 +3579,42 @@ Host architecture (e.g. x86_64, arm, ppc, mips).
 
 --
 
+*`host.containerized`*::
++
+--
+type: boolean
+
+If the host is a container.
+
+
+--
+
 *`host.os.platform`*::
 +
 --
 type: keyword
 
 OS platform (e.g. centos, ubuntu, windows).
+
+
+--
+
+*`host.os.name`*::
++
+--
+type: keyword
+
+Operating system name (e.g. "Mac OS X").
+
+
+--
+
+*`host.os.build`*::
++
+--
+type: keyword
+
+OS build information (e.g. "18D109").
 
 
 --
@@ -3373,6 +3743,462 @@ Kubernetes container name
 type: keyword
 
 Kubernetes container image
+
+
+--
+
+[[exported-fields-system]]
+== System fields
+
+These are the fields generated by the system module.
+
+
+
+
+*`event.origin`*::
++
+--
+type: keyword
+
+Origin of the event. This can be a file path (e.g. `/var/log/log.1`), or the name of the system component that supplied the data (e.g. `netlink`).
+
+
+--
+
+*`event.outcome`*::
++
+--
+type: keyword
+
+example: success
+
+The outcome of the event.
+If the event describes an action, this fields contains the outcome of that action. Examples outcomes are `success` and `failure`. Warning: In future versions of ECS, we plan to provide a list of acceptable values for this field, please use with caution.
+
+
+--
+
+
+*`user.entity_id`*::
++
+--
+type: keyword
+
+ID uniquely identifying the user on a host. It is computed as a SHA-256 hash of the host ID, user ID, and user name.
+
+
+--
+
+*`user.terminal`*::
++
+--
+type: keyword
+
+Terminal of the user.
+
+
+--
+
+
+*`process.entity_id`*::
++
+--
+type: keyword
+
+ID uniquely identifying the process. It is computed as a SHA-256 hash of the host ID, PID, and process start time.
+
+
+--
+
+
+*`socket.entity_id`*::
++
+--
+type: keyword
+
+ID uniquely identifying the socket. It is computed as a SHA-256 hash of the host ID, socket inode, local IP, local port, remote IP, and remote port.
+
+
+--
+
+[float]
+== system.audit fields
+
+
+
+
+[float]
+== host fields
+
+`host` contains general host information.
+
+
+
+*`system.audit.host.uptime`*::
++
+--
+type: long
+
+format: duration
+
+Uptime in nanoseconds.
+
+
+--
+
+*`system.audit.host.boottime`*::
++
+--
+type: date
+
+Boot time.
+
+
+--
+
+*`system.audit.host.containerized`*::
++
+--
+type: boolean
+
+Set if host is a container.
+
+
+--
+
+*`system.audit.host.timezone.name`*::
++
+--
+type: keyword
+
+Name of the timezone of the host, e.g. BST.
+
+
+--
+
+*`system.audit.host.timezone.offset.sec`*::
++
+--
+type: long
+
+Timezone offset in seconds.
+
+
+--
+
+*`system.audit.host.hostname`*::
++
+--
+type: keyword
+
+Hostname.
+
+
+--
+
+*`system.audit.host.id`*::
++
+--
+type: keyword
+
+Host ID.
+
+
+--
+
+*`system.audit.host.architecture`*::
++
+--
+type: keyword
+
+Host architecture (e.g. x86_64).
+
+
+--
+
+*`system.audit.host.mac`*::
++
+--
+type: keyword
+
+MAC addresses.
+
+
+--
+
+*`system.audit.host.ip`*::
++
+--
+type: ip
+
+IP addresses.
+
+
+--
+
+[float]
+== os fields
+
+`os` contains information about the operating system.
+
+
+
+*`system.audit.host.os.platform`*::
++
+--
+type: keyword
+
+OS platform (e.g. centos, ubuntu, windows).
+
+
+--
+
+*`system.audit.host.os.name`*::
++
+--
+type: keyword
+
+OS name (e.g. Mac OS X).
+
+
+--
+
+*`system.audit.host.os.family`*::
++
+--
+type: keyword
+
+OS family (e.g. redhat, debian, freebsd, windows).
+
+
+--
+
+*`system.audit.host.os.version`*::
++
+--
+type: keyword
+
+OS version.
+
+
+--
+
+*`system.audit.host.os.kernel`*::
++
+--
+type: keyword
+
+The operating system's kernel version.
+
+
+--
+
+[float]
+== package fields
+
+`package` contains information about an installed or removed package.
+
+
+
+*`system.audit.package.entity_id`*::
++
+--
+type: keyword
+
+ID uniquely identifying the package. It is computed as a SHA-256 hash of the
+  host ID, package name, and package version.
+
+
+--
+
+*`system.audit.package.name`*::
++
+--
+type: keyword
+
+Package name.
+
+
+--
+
+*`system.audit.package.version`*::
++
+--
+type: keyword
+
+Package version.
+
+
+--
+
+*`system.audit.package.release`*::
++
+--
+type: keyword
+
+Package release.
+
+
+--
+
+*`system.audit.package.arch`*::
++
+--
+type: keyword
+
+Package architecture.
+
+
+--
+
+*`system.audit.package.license`*::
++
+--
+type: keyword
+
+Package license.
+
+
+--
+
+*`system.audit.package.installtime`*::
++
+--
+type: date
+
+Package install time.
+
+
+--
+
+*`system.audit.package.size`*::
++
+--
+type: long
+
+Package size.
+
+
+--
+
+*`system.audit.package.summary`*::
++
+--
+Package summary.
+
+
+--
+
+*`system.audit.package.url`*::
++
+--
+type: keyword
+
+Package URL.
+
+
+--
+
+[float]
+== user fields
+
+`user` contains information about the users on a system.
+
+
+
+*`system.audit.user.name`*::
++
+--
+type: keyword
+
+User name.
+
+
+--
+
+*`system.audit.user.uid`*::
++
+--
+type: keyword
+
+User ID.
+
+
+--
+
+*`system.audit.user.gid`*::
++
+--
+type: keyword
+
+Group ID.
+
+
+--
+
+*`system.audit.user.dir`*::
++
+--
+type: keyword
+
+User's home directory.
+
+
+--
+
+*`system.audit.user.shell`*::
++
+--
+type: keyword
+
+Program to run at login.
+
+
+--
+
+*`system.audit.user.user_information`*::
++
+--
+type: text
+
+General user information. On Linux, this is the gecos field.
+
+
+--
+
+*`system.audit.user.group`*::
++
+--
+type: object
+
+`group` contains information about any groups the user is part of (beyond the user's primary group).
+
+
+--
+
+[float]
+== password fields
+
+`password` contains information about a user's password (not the password itself).
+
+
+
+*`system.audit.user.password.type`*::
++
+--
+type: keyword
+
+A user's password type. Possible values are `shadow_password` (the password hash is in the shadow file), `password_disabled`, `no_password` (this is dangerous as anyone can log in), and `crypt_password` (when the password field in /etc/passwd seems to contain an encrypted password).
+
+
+--
+
+*`system.audit.user.password.last_changed`*::
++
+--
+type: date
+
+The day the user's password was last changed.
 
 
 --

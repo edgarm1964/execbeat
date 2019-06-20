@@ -36,6 +36,7 @@ func init() {
 
 var debugf = logp.MakeDebug("http")
 
+// Create makes a new HTTP monitor
 func create(
 	name string,
 	cfg *common.Config,
@@ -70,7 +71,10 @@ func create(
 		body = buf.Bytes()
 	}
 
-	validator := makeValidateResponse(&config.Check.Response)
+	validator, err := makeValidateResponse(&config.Check.Response)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	jobs = make([]monitors.Job, len(config.URLs))
 
@@ -95,7 +99,8 @@ func create(
 		}
 	}
 
-	return jobs, len(config.URLs), nil
+	errWrappedJobs := monitors.WrapAll(jobs, monitors.WithErrAsField)
+	return errWrappedJobs, len(config.URLs), nil
 }
 
 func newRoundTripper(config *Config, tls *transport.TLSConfig) (*http.Transport, error) {

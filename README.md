@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/github/license/edgarm1964/execbeat.svg)](https://github.com/edgarm1964/execbeat)
 [![Github All Releases](https://img.shields.io/github/downloads/edgarm1964/execbeat/total.svg)](https://github.com/edgarm1964/execbeat)
 
-![Elastic Beats 6.5.1](https://img.shields.io/badge/Elastic%20Beats-v6.5.1-blue.svg)
+![Elastic Beats 6.8.0](https://img.shields.io/badge/Elastic%20Beats-v6.8.0-blue.svg)
 ![Golang 1.12](https://img.shields.io/badge/Golang-v1.12-blue.svg)
 
 # Overview
@@ -25,6 +25,7 @@ Execbeat is tested against the following Beats versions and if execbeat was able
 | Build against | Connect to ES 6.5.1 | ES 6.8.0 | ES 7.0.0 | ES 7.1.1 |
 | ---- | ---- | ---- | ---- | ---- |
 | Beats 6.5.1 | OK | OK | Fails | N/T |
+| Beats 6.8.0 | OK | OK | OK | OK |
 
 N/T: Not Tested
 
@@ -137,6 +138,12 @@ make package
 This will fetch and create all images required for the build process. The complete process to finish can take several minutes.
 
 # Releases
+
+## 6.8.0 (2019-06-20) [Download](https://github.com/edgarm1964/execbeat/releases/tag/6.8.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/6.8.0/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/6.8.0)
+
+Feature and Bugfix release containing the following changes:
+* Update to beats v6.8.0
 
 ## 6.5.1 (2019-06-20) [Download](https://github.com/edgarm1964/execbeat/releases/tag/6.5.1)
 [![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/6.5.1/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/6.5.1)
