@@ -138,6 +138,15 @@ This will fetch and create all images required for the build process. The comple
 
 # Releases
 
+## 6.5.1 (2019-06-20) [Download](https://github.com/edgarm1964/execbeat/releases/tag/6.5.1)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/6.5.1/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/6.5.1)
+
+Feature and Bugfix release containing the following changes:
+* Update to beats v6.5.1
+* Redesigned from the ground up following the [Creating a New Beat](https://www.elastic.co/guide/en/beats/devguide/current/new-beat.html) guide
+* execbeat.yml is incompatible with the ones from previous versions: change 'schedule' into 'period'
+
+
 ## 3.3.0 (2017-10-06) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.3.0)
 [![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.3.0/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/3.3.0)
 
