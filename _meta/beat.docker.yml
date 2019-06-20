@@ -8,7 +8,7 @@ execbeat:
     -
       # Optional cron expression, defines when to execute the command.
       # Default is every 1 minute.
-      #schedule:
+      #period:
 
       # The command to execute by Execbeat
       command: date
@@ -20,7 +20,10 @@ execbeat:
       # the type defines the document type these entries should be stored
       # in. Default: execbeat
       #document_type:
+processors:
+- add_cloud_metadata: ~
 
-#
-# To be able to execute external commands, disable seccomp
-seccomp.enabled: false
+output.elasticsearch:
+  hosts: '${ELASTICSEARCH_HOSTS:elasticsearch:9200}'
+  username: '${ELASTICSEARCH_USERNAME:}'
+  password: '${ELASTICSEARCH_PASSWORD:}'

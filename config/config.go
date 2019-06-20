@@ -28,7 +28,7 @@ type Config struct {
 }
 
 type ExecConfig struct {
-	Schedule        time.Duration `config:"schedule"`
+	Schedule        time.Duration `config:"period"`
 	Command         string        `config:"command"`
 	Args            string        `config:"args"`
 	DocumentType    string        `config:"document_type"`
