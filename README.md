@@ -67,7 +67,7 @@ make clean && make
 To run execbeat with debugging output enabled, run:
 
 ```
-./execbeat -c execbeat.yml -e -d "*"
+./execbeat -c execbeat.yml -e -d '*'
 ```
 
 ### Test
