@@ -50,7 +50,7 @@ Where supported Execbeat can be started also using the respetive service scripts
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.12
+* [Golang](https://golang.org/dl/) 1.10
 * [Glide](https://github.com/Masterminds/glide) >= 0.13.0
 * [Mage](https://magefile.org) >= 1.8.0
 

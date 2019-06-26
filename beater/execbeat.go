@@ -113,6 +113,8 @@ func (bt *Execbeat) CreateAndRunWorker(cfg config.ExecConfig) error {
 	var err error
 	var cmd *exec.Cmd
 	var execCommand string
+	var exitcode int = 0
+	var waitStatus syscall.WaitStatus
 
 	// mark goroutine finshed when worker ends
 	defer bt.waitGroup.Done()
@@ -149,13 +151,21 @@ func (bt *Execbeat) CreateAndRunWorker(cfg config.ExecConfig) error {
 		// possible that Run() returns with 'Operation not permitted'
 		// In that case add 'seccomp.enabled: false' to your
 		// configuration file
-		err = cmd.Run()
-
+		err = cmd.Start()
 		if err != nil {
-			logp.Err("Couldn't execute %s: %v. Maybe add 'seccomp.enabled: false' to the configuration file?", execCommand, err)
-			return nil
+			logp.Err("An error occured while executing command: %v", err)
+			exitcode = 127
 		}
-		exitcode := cmd.ProcessState.ExitCode()
+
+		err = cmd.Wait()
+		if err != nil {
+			logp.Err("An error occured while executing command: %v", err)
+			if exitError, ok := err.(*exec.ExitError); ok {
+				waitStatus = exitError.Sys().(syscall.WaitStatus)
+				exitcode = waitStatus.ExitStatus()
+			}
+		}
+
 		logp.Info("stdout: %s, stderr: %s, exitcode: %d\n",
 			strings.Trim(outb.String(), " \n"),
 			strings.Trim(errb.String(), " \n"),
