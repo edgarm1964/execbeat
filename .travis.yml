@@ -5,7 +5,7 @@ services:
 language: go
 
 go:
-  - 1.12
+  - 1.10
 
 os:
   - linux
