@@ -145,8 +145,8 @@ This will fetch and create all images required for the build process. The comple
 Feature and Bugfix release containing the following changes:
 * Update to beats v6.8.0
 
-## 6.5.1 (2019-06-20) [Download](https://github.com/edgarm1964/execbeat/releases/tag/6.5.1)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/6.5.1/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/6.5.1)
+## 6.5.1 (2019-06-20) [Download](https://github.com/edgarm1964/execbeat/releases/tag/v6.5.1)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/v6.5.1/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/v6.5.1)
 
 Feature and Bugfix release containing the following changes:
 * Update to beats v6.5.1
