@@ -1,4 +1,4 @@
-// +build !windows,!freebsd
+// +build !windows
 
 package system
 
