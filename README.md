@@ -148,38 +148,38 @@ Feature and Bugfix release containing the following changes:
 
 
 ## 3.3.0 (2017-10-06) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.3.0)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.3.0/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/3.3.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.3.0/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/3.3.0)
 
 Feature and Bugfix release containing the following changes:
 * Update to beats v5.6.2
 
 ## 3.2.0 (2017-06-05) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.2.0)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.2.0/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/3.2.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.2.0/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/3.2.0)
 
 Feature and bugfix release containing the following changes:
 * Fix: [Use exit code 127 when command to execute is not found](https://github.com/christiangalsterer/execbeat/issues/15)
 
 ## 3.1.1 (2017-02-24) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.1.1)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.1.1/total.svg)](https://g0thub.com/christiangalsterer/execneat/releases/tag/3.1.1)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.1.1/total.svg)](https://g0thub.com/christiangalsterer/execbeat/releases/tag/3.1.1)
 
 Bugfix release containing the following changes:
 * [Set correct version in package names and package metadata](https://github.com/christiangalsterer/execbeat/issues/10)
 
 ## 3.1.0 (2017-02-23) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.1.0)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.1.0/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/3.1.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.1.0/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/3.1.0)
 
 Feature and bugfix release containing the following changes:
 * The exit code of the command executed is now exported in field `exitCode`.
 * Fix: Examples were not fully updated with configuration changes introduced in 3.0.0.
 
 ## 3.0.1 (2017-02-21) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.0.1)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.0.1/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/3.0.1)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.0.1/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/3.0.1)
 
 Bugfix release containing the following changes:
 * [Multiple arguments are not properly passed](https://github.com/christiangalsterer/execbeat/issues/7)
 
 ## 3.0.0 (2017-02-19) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/3.0.0)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.0.0/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/3.0.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/3.0.0/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/3.0.0)
 
 Feature and bugfix release containing the following **breaking** changes:
 * Renamed configuration parameter `execs` to `commands`. Please update your configuration accordingly.
@@ -188,13 +188,13 @@ Feature and bugfix release containing the following **breaking** changes:
 * Fix: [Default schedule not working](https://github.com/christiangalsterer/execbeat/issues/6)
 
 ## 2.2.0 (2017-02-04) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/2.2.0)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/2.2.0/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/2.2.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/2.2.0/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/2.2.0)
 
 Feature release containing the following changes:
 * Update to beats v5.2.0
 
 ## 2.1.1 (2017-01-14) [Download](https://github.com/christiangalsterer/execbeat/releases/tag/2.1.1)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/2.1.1/total.svg)](https://github.com/christiangalsterer/execneat/releases/tag/2.1.1)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/christiangalsterer/execbeat/2.1.1/total.svg)](https://github.com/christiangalsterer/execbeat/releases/tag/2.1.1)
 
 Starting with this release pre-compiled binaries for different operating systems are available under the respective tag in the github project.
 
