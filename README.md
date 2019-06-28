@@ -5,7 +5,7 @@
 [![Github All Releases](https://img.shields.io/github/downloads/edgarm1964/execbeat/total.svg)](https://github.com/edgarm1964/execbeat)
 
 ![Elastic Beats 6.8.0](https://img.shields.io/badge/Elastic%20Beats-v6.8.0-blue.svg)
-![Golang 1.12](https://img.shields.io/badge/Golang-v1.12-blue.svg)
+![Golang 1.10.8](https://img.shields.io/badge/Golang-v1.10.8-blue.svg)
 
 # Overview
 
@@ -50,7 +50,7 @@ Where supported Execbeat can be started also using the respetive service scripts
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.10
+* [Golang](https://golang.org/dl/) 1.10.8
 * [Glide](https://github.com/Masterminds/glide) >= 0.13.0
 * [Mage](https://magefile.org) >= 1.8.0
 
