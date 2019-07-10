@@ -25,7 +25,7 @@ Execbeat is tested against the following Beats versions and if execbeat was able
 | Build against | Connect to ES 6.5.1 | ES 6.8.0 | ES 7.0.0 | ES 7.1.1 | ES 7.2.0 |
 | ---- | ---- | ---- | ---- | ---- | ---- |
 | Beats 6.5.1 | OK | OK | Fails | N/T | N/T |
-| Beats 6.8.0 | OK | OK | OK | OK | N/T |
+| Beats 6.8.0 | OK | OK | OK | OK | OK |
 | Beats 6.8.1 | OK | OK | OK | OK | OK |
 
 N/T: Not Tested
