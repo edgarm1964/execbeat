@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/github/license/edgarm1964/execbeat.svg)](https://github.com/edgarm1964/execbeat)
 [![Github All Releases](https://img.shields.io/github/downloads/edgarm1964/execbeat/total.svg)](https://github.com/edgarm1964/execbeat)
 
-![Elastic Beats 6.8.1](https://img.shields.io/badge/Elastic%20Beats-v6.8.1-blue.svg)
+![Elastic Beats 7.0.0](https://img.shields.io/badge/Elastic%20Beats-v7.0.0-blue.svg)
 ![Golang 1.11.5](https://img.shields.io/badge/Golang-v1.11.5-blue.svg)
 
 # Overview
