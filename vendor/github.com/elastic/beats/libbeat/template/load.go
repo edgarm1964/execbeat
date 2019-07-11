@@ -37,26 +37,27 @@ type ESClient interface {
 }
 
 type Loader struct {
-	config   TemplateConfig
-	client   ESClient
-	beatInfo beat.Info
-	fields   []byte
+	config    TemplateConfig
+	client    ESClient
+	beatInfo  beat.Info
+	fields    []byte
+	migration bool
 }
 
 // NewLoader creates a new template loader
-func NewLoader(cfg *common.Config, client ESClient, beatInfo beat.Info, fields []byte) (*Loader, error) {
-	config := DefaultConfig
-
-	err := cfg.Unpack(&config)
-	if err != nil {
-		return nil, err
-	}
-
+func NewLoader(
+	config TemplateConfig,
+	client ESClient,
+	beatInfo beat.Info,
+	fields []byte,
+	migration bool,
+) (*Loader, error) {
 	return &Loader{
-		config:   config,
-		client:   client,
-		beatInfo: beatInfo,
-		fields:   fields,
+		config:    config,
+		client:    client,
+		beatInfo:  beatInfo,
+		fields:    fields,
+		migration: migration,
 	}, nil
 }
 
@@ -64,7 +65,7 @@ func NewLoader(cfg *common.Config, client ESClient, beatInfo beat.Info, fields [
 // In case the template is not already loaded or overwriting is enabled, the
 // template is written to index
 func (l *Loader) Load() error {
-	tmpl, err := New(l.beatInfo.Version, l.beatInfo.IndexPrefix, l.client.GetVersion(), l.config)
+	tmpl, err := New(l.beatInfo.Version, l.beatInfo.IndexPrefix, l.client.GetVersion(), l.config, l.migration)
 	if err != nil {
 		return fmt.Errorf("error creating template instance: %v", err)
 	}

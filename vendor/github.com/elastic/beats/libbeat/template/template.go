@@ -22,12 +22,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elastic/go-ucfg/yaml"
-
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/common/cfgwarn"
 	"github.com/elastic/beats/libbeat/common/fmtstr"
+	"github.com/elastic/go-ucfg/yaml"
 )
 
 var (
@@ -47,12 +46,20 @@ type Template struct {
 	name        string
 	pattern     string
 	beatVersion common.Version
+	beatName    string
 	esVersion   common.Version
 	config      TemplateConfig
+	migration   bool
 }
 
 // New creates a new template instance
-func New(beatVersion string, beatName string, esVersion common.Version, config TemplateConfig) (*Template, error) {
+func New(
+	beatVersion string,
+	beatName string,
+	esVersion common.Version,
+	config TemplateConfig,
+	migration bool,
+) (*Template, error) {
 	bV, err := common.NewVersion(beatVersion)
 	if err != nil {
 		return nil, err
@@ -70,7 +77,17 @@ func New(beatVersion string, beatName string, esVersion common.Version, config T
 
 	event := &beat.Event{
 		Fields: common.MapStr{
+			// beat object was left in for backward compatibility reason for older configs.
 			"beat": common.MapStr{
+				"name":    beatName,
+				"version": bV.String(),
+			},
+			"agent": common.MapStr{
+				"name":    beatName,
+				"version": bV.String(),
+			},
+			// For the Beats that have an observer role
+			"observer": common.MapStr{
 				"name":    beatName,
 				"version": bV.String(),
 			},
@@ -106,7 +123,9 @@ func New(beatVersion string, beatName string, esVersion common.Version, config T
 		name:        name,
 		beatVersion: *bV,
 		esVersion:   esVersion,
+		beatName:    beatName,
 		config:      config,
+		migration:   migration,
 	}, nil
 }
 
@@ -130,7 +149,7 @@ func (t *Template) load(fields common.Fields) (common.MapStr, error) {
 
 	// Start processing at the root
 	properties := common.MapStr{}
-	processor := Processor{EsVersion: t.esVersion}
+	processor := Processor{EsVersion: t.esVersion, Migration: t.migration}
 	if err := processor.Process(fields, "", properties); err != nil {
 		return nil, err
 	}
@@ -178,7 +197,7 @@ func (t *Template) Generate(properties common.MapStr, dynamicTemplates []common.
 		keyPattern: patterns,
 
 		"mappings": buildMappings(
-			t.beatVersion, t.esVersion,
+			t.beatVersion, t.esVersion, t.beatName,
 			properties,
 			append(dynamicTemplates, buildDynTmpl(t.esVersion)),
 			common.MapStr(t.config.Settings.Source),
@@ -204,6 +223,7 @@ func buildPatternSettings(ver common.Version, pattern string) (string, interface
 
 func buildMappings(
 	beatVersion, esVersion common.Version,
+	beatName string,
 	properties common.MapStr,
 	dynTmpls []common.MapStr,
 	source common.MapStr,
@@ -211,6 +231,7 @@ func buildMappings(
 	mapping := common.MapStr{
 		"_meta": common.MapStr{
 			"version": beatVersion.String(),
+			"beat":    beatName,
 		},
 		"date_detection":    defaultDateDetection,
 		"dynamic_templates": dynTmpls,
@@ -277,8 +298,7 @@ func buildIdxSettings(ver common.Version, userSettings common.MapStr) common.Map
 		indexSettings.Put("number_of_routing_shards", defaultNumberOfRoutingShards)
 	}
 
-	// 6.0 is excluded because it did not support an array for query.default_field
-	if ver.Major >= 6 && !(ver.Major == 6 && ver.Minor == 0) {
+	if ver.Major >= 7 {
 		// copy defaultFields, as defaultFields is shared global slice.
 		fields := make([]string, len(defaultFields))
 		copy(fields, defaultFields)

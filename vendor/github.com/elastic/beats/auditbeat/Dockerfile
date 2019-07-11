@@ -1,5 +1,4 @@
-FROM golang:1.10.8
-MAINTAINER Nicolas Ruflin <ruflin@elastic.co>
+FROM golang:1.11.5
 
 RUN \
     apt-get update \
@@ -11,4 +10,4 @@ RUN \
 
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools
-RUN pip install --upgrade docker-compose==1.21.0
+RUN pip install --upgrade docker-compose==1.23.2

@@ -55,8 +55,8 @@ func NewMetaGenerator(cfg *common.Config) (MetaGenerator, error) {
 	// default settings:
 	generator := metaGenerator{
 		IncludeCreatorMetadata: true,
-		LabelsDedot:            false,
-		AnnotationsDedot:       false,
+		LabelsDedot:            true,
+		AnnotationsDedot:       true,
 	}
 
 	err := cfg.Unpack(&generator)
@@ -87,7 +87,7 @@ func (g *metaGenerator) ResourceMetadata(obj Resource) common.MapStr {
 
 	// Exclude any labels that are present in the exclude_labels config
 	for _, label := range g.ExcludeLabels {
-		delete(labelMap, label)
+		labelMap.Delete(label)
 	}
 
 	annotationsMap := generateMapSubset(objMeta.Annotations, g.IncludeAnnotations, g.AnnotationsDedot)

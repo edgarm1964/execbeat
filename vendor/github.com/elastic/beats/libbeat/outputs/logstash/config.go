@@ -30,7 +30,6 @@ import (
 
 type Config struct {
 	Index            string                `config:"index"`
-	Port             int                   `config:"port"`
 	LoadBalance      bool                  `config:"loadbalance"`
 	BulkMaxSize      int                   `config:"bulk_max_size"`
 	SlowStart        bool                  `config:"slow_start"`
@@ -52,7 +51,6 @@ type Backoff struct {
 
 func defaultConfig() Config {
 	return Config{
-		Port:             5044,
 		LoadBalance:      false,
 		Pipelining:       2,
 		BulkMaxSize:      2048,
@@ -72,12 +70,13 @@ func defaultConfig() Config {
 func readConfig(cfg *common.Config, info beat.Info) (*Config, error) {
 	c := defaultConfig()
 
-	if err := cfg.Unpack(&c); err != nil {
+	err := cfgwarn.CheckRemoved6xSettings(cfg, "port")
+	if err != nil {
 		return nil, err
 	}
 
-	if cfg.HasField("port") {
-		cfgwarn.Deprecate("7.0.0", "The Logstash outputs port setting")
+	if err := cfg.Unpack(&c); err != nil {
+		return nil, err
 	}
 
 	if c.Index == "" {

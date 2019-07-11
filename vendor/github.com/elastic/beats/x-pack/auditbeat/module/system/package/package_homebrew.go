@@ -30,7 +30,7 @@ type InstallReceipt struct {
 func listBrewPackages() ([]*Package, error) {
 	packageDirs, err := ioutil.ReadDir(homebrewCellarPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error reading directory %s", homebrewCellarPath)
 	}
 
 	var packages []*Package

@@ -15,18 +15,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// +build !linux !arm64
 // +build !windows
 
 package file
 
 import (
 	"os"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 // RedirectStandardError causes all standard error output to be directed to the
 // given file.
 func RedirectStandardError(toFile *os.File) error {
-	return syscall.Dup2(int(toFile.Fd()), 2)
+	return unix.Dup2(int(toFile.Fd()), 2)
 }

@@ -24,6 +24,7 @@ import (
 
 	"github.com/elastic/beats/metricbeat/module/zookeeper"
 
+	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/stretchr/testify/assert"
 
 	mbtest "github.com/elastic/beats/metricbeat/mb/testing"

@@ -146,7 +146,7 @@ func (s Socket) toMapStr() common.MapStr {
 	}
 
 	switch s.Direction {
-	case sock.Outgoing:
+	case sock.Outbound:
 		mapstr.Put("source", common.MapStr{
 			"ip":   s.LocalIP,
 			"port": s.LocalPort,
@@ -155,7 +155,7 @@ func (s Socket) toMapStr() common.MapStr {
 			"ip":   s.RemoteIP,
 			"port": s.RemotePort,
 		})
-	case sock.Incoming:
+	case sock.Inbound:
 		mapstr.Put("source", common.MapStr{
 			"ip":   s.RemoteIP,
 			"port": s.RemotePort,
@@ -194,9 +194,9 @@ func (s Socket) entityID(hostID string) string {
 // to be compatible with recommended ECS values for network.direction.
 func ecsDirectionString(direction sock.Direction) string {
 	switch direction {
-	case sock.Incoming:
+	case sock.Inbound:
 		return "inbound"
-	case sock.Outgoing:
+	case sock.Outbound:
 		return "outbound"
 	case sock.Listening:
 		return "listening"
@@ -207,7 +207,7 @@ func ecsDirectionString(direction sock.Direction) string {
 
 // New constructs a new MetricSet.
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	cfgwarn.Experimental("The %v/%v dataset is experimental", moduleName, metricsetName)
+	cfgwarn.Beta("The %v/%v dataset is beta", moduleName, metricsetName)
 
 	config := defaultConfig
 	if err := base.Module().UnpackConfig(&config); err != nil {
@@ -328,9 +328,7 @@ func (ms *MetricSet) socketEvent(socket *Socket, eventType string, action eventA
 	event.RootFields.Put("event.action", action.String())
 	event.RootFields.Put("message", socketMessage(socket, action))
 
-	if ms.HostID() != "" {
-		event.RootFields.Put("socket.entity_id", socket.entityID(ms.HostID()))
-	}
+	event.RootFields.Put("socket.entity_id", socket.entityID(ms.HostID()))
 
 	return event
 }
@@ -348,10 +346,10 @@ func socketMessage(socket *Socket, action eventAction) string {
 
 	var endpointString string
 	switch socket.Direction {
-	case sock.Incoming:
+	case sock.Inbound:
 		endpointString = fmt.Sprintf("%v:%d -> %v:%d",
 			socket.RemoteIP, socket.RemotePort, socket.LocalIP, socket.LocalPort)
-	case sock.Outgoing:
+	case sock.Outbound:
 		endpointString = fmt.Sprintf("%v:%d -> %v:%d",
 			socket.LocalIP, socket.LocalPort, socket.RemoteIP, socket.RemotePort)
 	case sock.Listening:
@@ -381,7 +379,7 @@ func (ms *MetricSet) enrichSocket(socket *Socket) error {
 
 	socket.Username = userAccount.Username
 
-	socket.Direction = ms.listeners.Direction(uint8(socket.Family), uint8(syscall.IPPROTO_TCP),
+	socket.Direction = ms.listeners.Direction(uint8(syscall.IPPROTO_TCP),
 		socket.LocalIP, socket.LocalPort, socket.RemoteIP, socket.RemotePort)
 
 	if ms.ptable != nil {

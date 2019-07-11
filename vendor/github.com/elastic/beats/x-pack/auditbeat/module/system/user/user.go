@@ -202,7 +202,7 @@ type MetricSet struct {
 
 // New constructs a new MetricSet.
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	cfgwarn.Experimental("The %v/%v dataset is experimental", moduleName, metricsetName)
+	cfgwarn.Beta("The %v/%v dataset is beta", moduleName, metricsetName)
 	if runtime.GOOS != "linux" {
 		return nil, fmt.Errorf("the %v/%v dataset is only supported on Linux", moduleName, metricsetName)
 	}
@@ -427,26 +427,21 @@ func (ms *MetricSet) reportChanges(report mb.ReporterV2) error {
 }
 
 func (ms *MetricSet) userEvent(user *User, eventType string, action eventAction) mb.Event {
-	event := mb.Event{
+	return mb.Event{
 		RootFields: common.MapStr{
 			"event": common.MapStr{
 				"kind":   eventType,
 				"action": action.String(),
 			},
 			"user": common.MapStr{
-				"id":   user.UID,
-				"name": user.Name,
+				"entity_id": user.entityID(ms.HostID()),
+				"id":        user.UID,
+				"name":      user.Name,
 			},
 			"message": userMessage(user, action),
 		},
 		MetricSetFields: user.toMapStr(),
 	}
-
-	if ms.HostID() != "" {
-		event.RootFields.Put("user.entity_id", user.entityID(ms.HostID()))
-	}
-
-	return event
 }
 
 func userMessage(user *User, action eventAction) string {
@@ -471,10 +466,12 @@ func userMessage(user *User, action eventAction) string {
 func fmtGroups(groups []*user.Group) string {
 	var b strings.Builder
 
-	b.WriteString(groups[0].Name)
-	for _, group := range groups[1:] {
-		b.WriteString(",")
-		b.WriteString(group.Name)
+	if len(groups) > 0 {
+		b.WriteString(groups[0].Name)
+		for _, group := range groups[1:] {
+			b.WriteString(",")
+			b.WriteString(group.Name)
+		}
 	}
 
 	return b.String()

@@ -75,7 +75,7 @@ func Package() {
 
 	mage.UseElasticBeatXPackPackaging()
 	mage.PackageKibanaDashboardsFromBuildDir()
-	auditbeat.CustomizePackaging()
+	auditbeat.CustomizePackaging(auditbeat.XPackPackaging)
 
 	mg.SerialDeps(Fields, Dashboards, Config, mage.GenerateModuleIncludeListGo)
 	mg.Deps(CrossBuild, CrossBuildGoDaemon)
@@ -87,17 +87,26 @@ func TestPackages() error {
 	return mage.TestPackages()
 }
 
-// Fields generates a fields.yml and for each module generates a fields.go.
+// Update is an alias for running fields, dashboards, config.
+func Update() {
+	mg.SerialDeps(Fields, Dashboards, Config, mage.GenerateModuleIncludeListGo)
+}
+
+// Config generates both the short and reference configs.
+func Config() error {
+	return mage.Config(mage.AllConfigTypes, auditbeat.XPackConfigFileParams(), ".")
+}
+
+// Fields generates a fields.yml and include/fields.go.
 func Fields() {
 	mg.SerialDeps(fieldsYML, moduleFieldsGo)
 }
 
-// moduleFieldsGo generates a fields.go file for each module.
 func moduleFieldsGo() error {
 	return mage.GenerateModuleFieldsGo("module")
 }
 
-// fieldsYML generates a fields.yml based on auditbeat + x-pack/auditbeat/modules.
+// fieldsYML generates the fields.yml file containing all fields.
 func fieldsYML() error {
 	return mage.GenerateFieldsYAML(mage.OSSBeatDir("module"), "module")
 }
@@ -114,24 +123,6 @@ func ExportDashboard() error {
 // Dashboards collects all the dashboards and generates index patterns.
 func Dashboards() error {
 	return mage.KibanaDashboards(mage.OSSBeatDir("module"), "module")
-}
-
-// Config generates both the short and reference configs.
-func Config() error {
-	return auditbeat.Config(
-		mage.OSSBeatDir(auditbeat.ConfigTemplateGlob),
-		auditbeat.ConfigTemplateGlob)
-}
-
-// Update is an alias for running fields, dashboards, config.
-func Update() {
-	mg.SerialDeps(Fields, Dashboards, Config, mage.GenerateModuleIncludeListGo,
-		Docs)
-}
-
-// Docs collects the documentation.
-func Docs() error {
-	return auditbeat.CollectDocs(mage.OSSBeatDir(), auditbeat.XpackBeatDir())
 }
 
 // Fmt formats source code and adds file headers.
@@ -262,11 +253,7 @@ func installDependencies(pkg, arch string) error {
 		}
 	}
 
-	// TODO: This is only for debian 7 and should be removed when move to a newer OS. This flag is
-	// going to be used unnecessary when building using non-debian7 images
-	// (like when making the linux/arm binaries) and we should remove it soonish.
-	// See https://github.com/elastic/beats/issues/11750 for more details.
-	if err := sh.Run("apt-get", "update", "-o", "Acquire::Check-Valid-Until=false"); err != nil {
+	if err := sh.Run("apt-get", "update"); err != nil {
 		return err
 	}
 

@@ -105,7 +105,7 @@ func TestLoadPipelinesWithMultiPipelineFileset(t *testing.T) {
 	}
 }
 
-func TestSetECSProcessors(t *testing.T) {
+func TestSetEcsProcessors(t *testing.T) {
 	cases := []struct {
 		name          string
 		esVersion     *common.Version
@@ -121,19 +121,10 @@ func TestSetECSProcessors(t *testing.T) {
 					map[string]interface{}{
 						"user_agent": map[string]interface{}{
 							"field": "foo.http_user_agent",
-							"ecs":   false,
 						},
 					},
 				}},
-			expected: map[string]interface{}{
-				"processors": []interface{}{
-					map[string]interface{}{
-						"user_agent": map[string]interface{}{
-							"field": "foo.http_user_agent",
-						},
-					},
-				}},
-			isErrExpected: false,
+			isErrExpected: true,
 		},
 		{
 			name:      "ES == 6.7.0",
@@ -149,7 +140,6 @@ func TestSetECSProcessors(t *testing.T) {
 					map[string]interface{}{
 						"user_agent": map[string]interface{}{
 							"field": "foo.http_user_agent",
-							"ecs":   false,
 						},
 					},
 				},
@@ -165,7 +155,7 @@ func TestSetECSProcessors(t *testing.T) {
 					map[string]interface{}{
 						"user_agent": map[string]interface{}{
 							"field": "foo.http_user_agent",
-							"ecs":   false,
+							"ecs":   true,
 						},
 					},
 				},
@@ -186,7 +176,6 @@ func TestSetECSProcessors(t *testing.T) {
 					map[string]interface{}{
 						"user_agent": map[string]interface{}{
 							"field": "foo.http_user_agent",
-							"ecs":   false,
 						},
 					},
 				},
@@ -202,7 +191,6 @@ func TestSetECSProcessors(t *testing.T) {
 					map[string]interface{}{
 						"user_agent": map[string]interface{}{
 							"field": "foo.http_user_agent",
-							"ecs":   false,
 						},
 					},
 				},

@@ -4,7 +4,7 @@
 :pull: https://github.com/elastic/beats/pull/
 
 === Beats version HEAD
-https://github.com/elastic/beats/compare/v6.8.0...6.8.1[Check the HEAD diff]
+https://github.com/elastic/beats/compare/v7.0.0-rc1...master[Check the HEAD diff]
 
 ==== Breaking changes
 
@@ -22,30 +22,32 @@ https://github.com/elastic/beats/compare/v6.8.0...6.8.1[Check the HEAD diff]
 
 *Packetbeat*
 
-*Packetbeat*
-
 *Winlogbeat*
 
 *Functionbeat*
-
 
 ==== Bugfixes
 
 *Affecting all Beats*
 
+- Relax validation of the X-Pack license UID value. {issue}11640[11640]
+- Fix a parsing error with the X-Pack license check on 32-bit system. {issue}11650[11650]
+- Fix ILM policy always being overwritten. {pull}11671[11671]
+- Fix template always being overwritten. {pull}11671[11671]
+
 *Auditbeat*
+
+- Package dataset: Nullify Librpm's rpmsqEnable. {pull}11628[11628]
 
 *Filebeat*
 
-- When TLS is configured for the TCP input and a `certificate_authorities` is configured we now default to `required` for the `client_authentication`. {pull}12584[12584]
+- Fix `add_docker_metadata` source matching, using `log.file.path` field now. {pull}11577[11577]
 
 *Heartbeat*
 
 *Journalbeat*
 
 *Metricbeat*
-
-- When TLS is configured for the http metricset and a `certificate_authorities` is configured we now default to `required` for the `client_authentication`. {pull}12584[12584]
 
 *Packetbeat*
 
@@ -68,8 +70,6 @@ https://github.com/elastic/beats/compare/v6.8.0...6.8.1[Check the HEAD diff]
 *Metricbeat*
 
 *Packetbeat*
-
-*Winlogbeat*
 
 *Functionbeat*
 
@@ -108,3 +108,6 @@ https://github.com/elastic/beats/compare/v6.8.0...6.8.1[Check the HEAD diff]
 *Winlogbeat*
 
 *Functionbeat*
+
+*Journalbeat*
+

@@ -89,7 +89,7 @@ func (m *MetricSet) Fetch(reporter mb.ReporterV2) {
 
 	event := mb.Event{
 		MetricSetFields: metricsetFields,
-		ModuleFields: common.MapStr{
+		RootFields: common.MapStr{
 			"service": common.MapStr{
 				"version": version,
 			},

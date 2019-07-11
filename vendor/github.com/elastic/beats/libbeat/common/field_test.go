@@ -241,6 +241,61 @@ func TestGetKeys(t *testing.T) {
 	}
 }
 
+func TestGetField(t *testing.T) {
+	tests := map[string]struct {
+		fields Fields
+		key    string
+		field  *Field
+	}{
+		"exists nested": {
+			fields: Fields{
+				Field{
+					Name: "test", Fields: Fields{
+						Field{
+							Name: "find",
+						},
+					},
+				},
+			},
+			key:   "test.find",
+			field: &Field{Name: "find"},
+		},
+		"no leave node": {
+			fields: Fields{
+				Field{
+					Name: "test", Fields: Fields{
+						Field{
+							Name: "find",
+						},
+					},
+				},
+			},
+			key:   "test",
+			field: nil,
+		},
+		"does not exist": {
+			fields: Fields{
+				Field{
+					Name: "test", Fields: Fields{
+						Field{
+							Name: "find",
+						},
+					},
+				},
+			},
+			key:   "test.find.more",
+			field: nil,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			field := test.fields.GetField(test.key)
+			assert.Equal(t, test.field, field)
+		})
+	}
+}
+
 func TestFieldValidate(t *testing.T) {
 	tests := map[string]struct {
 		cfg   MapStr

@@ -5,7 +5,7 @@
 [![Github All Releases](https://img.shields.io/github/downloads/edgarm1964/execbeat/total.svg)](https://github.com/edgarm1964/execbeat)
 
 ![Elastic Beats 6.8.1](https://img.shields.io/badge/Elastic%20Beats-v6.8.1-blue.svg)
-![Golang 1.10.8](https://img.shields.io/badge/Golang-v1.10.8-blue.svg)
+![Golang 1.11.5](https://img.shields.io/badge/Golang-v1.11.5-blue.svg)
 
 # Overview
 
@@ -27,6 +27,7 @@ Execbeat is tested against the following Beats versions and if execbeat was able
 | Beats 6.5.1 | OK | OK | Fails | N/T | N/T |
 | Beats 6.8.0 | OK | OK | OK | OK | OK |
 | Beats 6.8.1 | OK | OK | OK | OK | OK |
+| Beats 7.0.0 | OK | OK | OK | OK | OK |
 
 N/T: Not Tested
 
@@ -51,7 +52,7 @@ Where supported Execbeat can be started also using the respetive service scripts
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.10.8
+* [Golang](https://golang.org/dl/) 1.11.5
 * [Glide](https://github.com/Masterminds/glide) >= 0.13.0
 * [Mage](https://magefile.org) >= 1.8.0
 
@@ -93,8 +94,8 @@ The test coverage is reported in the folder `./build/coverage/`
 ### Update
 
 Each beat has a template for the mapping in elasticsearch and a documentation for the fields
-which is automatically generated based on `etc/fields.yml`.
-To generate etc/execbeat.template.json and etc/execbeat.asciidoc
+which is automatically generated based on `_meta/fields.yml`.
+To generate docs/execbeat.template.json and docs/execbeat.asciidoc
 
 ```
 make update
@@ -133,12 +134,18 @@ For further development, check out the [beat developer guide](https://www.elasti
 The beat frameworks provides tools to crosscompile and package your beat for different platforms. This requires [docker](https://www.docker.com/) and vendoring as described above. To build packages of your beat, run the following command:
 
 ```
-make package
+make release
 ```
 
 This will fetch and create all images required for the build process. The complete process to finish can take several minutes.
 
 # Releases
+
+## 7.0.0 (2019-07-11) [Download](https://github.com/edgarm1964/execbeat/releases/tag/7.0.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/7.0.0/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/7.0.0)
+
+Feature and Bugfix release containing the following changes:
+* Update to beats v7.0.0
 
 ## 6.8.1 (2019-07-08) [Download](https://github.com/edgarm1964/execbeat/releases/tag/6.8.1)
 [![Github Releases (by Release)](https://img.shields.io/github/downloads/edgarm1964/execbeat/6.8.1/total.svg)](https://github.com/edgarm1094/execbeat/releases/tag/6.8.1)

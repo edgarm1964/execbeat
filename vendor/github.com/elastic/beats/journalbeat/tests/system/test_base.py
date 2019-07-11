@@ -89,8 +89,7 @@ class Test(BaseTest):
             journal_path=self.beat_path + "/tests/system/input/test.journal",
             seek_method="cursor",
             cursor_seek_fallback="tail",
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            registry_file=self.beat_path + "/empty_test_registry",
+            path=os.path.abspath(self.working_dir) + "/log/*"
         )
         journalbeat_proc = self.start_beat()
 

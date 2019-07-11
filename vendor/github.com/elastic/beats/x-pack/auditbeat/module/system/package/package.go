@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +29,8 @@ import (
 	"github.com/elastic/beats/metricbeat/mb"
 	"github.com/elastic/beats/x-pack/auditbeat/cache"
 	"github.com/elastic/beats/x-pack/auditbeat/module/system"
+	"github.com/elastic/go-sysinfo"
+	"github.com/elastic/go-sysinfo/types"
 )
 
 const (
@@ -37,18 +38,19 @@ const (
 	metricsetName = "package"
 	namespace     = "system.audit.package"
 
+	redhat = "redhat"
+	debian = "debian"
+	darwin = "darwin"
+
+	dpkgStatusFile     = "/var/lib/dpkg/status"
+	homebrewCellarPath = "/usr/local/Cellar"
+
 	bucketName              = "package.v1"
 	bucketKeyPackages       = "packages"
 	bucketKeyStateTimestamp = "state_timestamp"
 
 	eventTypeState = "state"
 	eventTypeEvent = "event"
-)
-
-var (
-	rpmPath            = "/var/lib/rpm"
-	dpkgPath           = "/var/lib/dpkg"
-	homebrewCellarPath = "/usr/local/Cellar"
 )
 
 type eventAction uint8
@@ -90,8 +92,7 @@ type MetricSet struct {
 	cache     *cache.Cache
 	bucket    datastore.Bucket
 	lastState time.Time
-
-	suppressNoPackageWarnings bool
+	osFamily  string
 }
 
 // Package represents information for a package.
@@ -164,9 +165,23 @@ func (pkg Package) entityID(hostID string) string {
 	return h.Sum()
 }
 
+func getOS() (*types.OSInfo, error) {
+	host, err := sysinfo.Host()
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting the OS")
+	}
+
+	hostInfo := host.Info()
+	if hostInfo.OS == nil {
+		return nil, errors.New("no host info")
+	}
+
+	return hostInfo.OS, nil
+}
+
 // New constructs a new MetricSet.
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	cfgwarn.Experimental("The %v/%v dataset is experimental", moduleName, metricsetName)
+	cfgwarn.Beta("The %v/%v dataset is beta", moduleName, metricsetName)
 
 	config := defaultConfig()
 	if err := base.Module().UnpackConfig(&config); err != nil {
@@ -184,6 +199,26 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		log:             logp.NewLogger(metricsetName),
 		cache:           cache.New(),
 		bucket:          bucket,
+	}
+
+	osInfo, err := getOS()
+	if err != nil {
+		return nil, errors.Wrap(err, "error determining operating system")
+	}
+	ms.osFamily = osInfo.Family
+	switch osInfo.Family {
+	case redhat:
+		// ok
+	case debian:
+		if _, err := os.Stat(dpkgStatusFile); err != nil {
+			return nil, errors.Wrapf(err, "error looking up %s", dpkgStatusFile)
+		}
+	case darwin:
+		if _, err := os.Stat(homebrewCellarPath); err != nil {
+			return nil, errors.Wrapf(err, "error looking up %s - is Homebrew installed?", homebrewCellarPath)
+		}
+	default:
+		return nil, fmt.Errorf("this metricset does not support OS family %v", osInfo.Family)
 	}
 
 	// Load from disk: Time when state was last sent
@@ -225,8 +260,8 @@ func (ms *MetricSet) Close() error {
 // Fetch collects data about the host. It is invoked periodically.
 func (ms *MetricSet) Fetch(report mb.ReporterV2) {
 	needsStateUpdate := time.Since(ms.lastState) > ms.config.effectiveStatePeriod()
-	if needsStateUpdate {
-		ms.log.Debug("Sending state")
+	if needsStateUpdate || ms.cache.IsEmpty() {
+		ms.log.Debugf("State update needed (needsStateUpdate=%v, cache.IsEmpty()=%v)", needsStateUpdate, ms.cache.IsEmpty())
 		err := ms.reportState(report)
 		if err != nil {
 			ms.log.Error(err)
@@ -246,10 +281,11 @@ func (ms *MetricSet) Fetch(report mb.ReporterV2) {
 func (ms *MetricSet) reportState(report mb.ReporterV2) error {
 	ms.lastState = time.Now()
 
-	packages, err := ms.getPackages()
+	packages, err := getPackages(ms.osFamily)
 	if err != nil {
 		return errors.Wrap(err, "failed to get packages")
 	}
+	ms.log.Debugf("Found %v packages", len(packages))
 
 	stateID, err := uuid.NewV4()
 	if err != nil {
@@ -279,10 +315,11 @@ func (ms *MetricSet) reportState(report mb.ReporterV2) error {
 
 // reportChanges detects and reports any changes to installed packages on this system since the last call.
 func (ms *MetricSet) reportChanges(report mb.ReporterV2) error {
-	packages, err := ms.getPackages()
+	packages, err := getPackages(ms.osFamily)
 	if err != nil {
 		return errors.Wrap(err, "failed to get packages")
 	}
+	ms.log.Debugf("Found %v packages", len(packages))
 
 	newInCache, missingFromCache := ms.cache.DiffAndUpdateCache(convertToCacheable(packages))
 	newPackages := convertToPackage(newInCache)
@@ -345,9 +382,7 @@ func (ms *MetricSet) packageEvent(pkg *Package, eventType string, action eventAc
 		MetricSetFields: pkg.toMapStr(),
 	}
 
-	if ms.HostID() != "" {
-		event.MetricSetFields.Put("entity_id", pkg.entityID(ms.HostID()))
-	}
+	event.MetricSetFields.Put("entity_id", pkg.entityID(ms.HostID()))
 
 	if pkg.Error != nil {
 		event.RootFields.Put("error.message", pkg.Error.Error())
@@ -434,68 +469,31 @@ func (ms *MetricSet) savePackagesToDisk(packages []*Package) error {
 	return nil
 }
 
-func (ms *MetricSet) getPackages() (packages []*Package, err error) {
-	var foundPackageManager bool
-
-	_, err = os.Stat(rpmPath)
-	if err == nil {
-		foundPackageManager = true
-
-		rpmPackages, err := listRPMPackages()
+func getPackages(osFamily string) (packages []*Package, err error) {
+	switch osFamily {
+	case redhat:
+		packages, err = listRPMPackages()
 		if err != nil {
-			return nil, errors.Wrap(err, "error getting RPM packages")
+			err = errors.Wrap(err, "error getting RPM packages")
 		}
-		ms.log.Debugf("RPM packages: %v", len(rpmPackages))
-
-		packages = append(packages, rpmPackages...)
-	} else if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrapf(err, "error opening %v", rpmPath)
-	}
-
-	_, err = os.Stat(dpkgPath)
-	if err == nil {
-		foundPackageManager = true
-
-		dpkgPackages, err := listDebPackages()
+	case debian:
+		packages, err = listDebPackages()
 		if err != nil {
-			return nil, errors.Wrap(err, "error getting DEB packages")
+			err = errors.Wrap(err, "error getting DEB packages")
 		}
-		ms.log.Debugf("DEB packages: %v", len(dpkgPackages))
-
-		packages = append(packages, dpkgPackages...)
-	} else if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrapf(err, "error opening %v", dpkgPath)
-	}
-
-	_, err = os.Stat(homebrewCellarPath)
-	if err == nil {
-		foundPackageManager = true
-
-		homebrewPackages, err := listBrewPackages()
+	case darwin:
+		packages, err = listBrewPackages()
 		if err != nil {
-			return nil, errors.Wrap(err, "error getting Homebrew packages")
+			err = errors.Wrap(err, "error getting Homebrew packages")
 		}
-		ms.log.Debugf("Homebrew packages: %v", len(homebrewPackages))
-
-		packages = append(packages, homebrewPackages...)
-	} else if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrapf(err, "error opening %v", homebrewCellarPath)
+	default:
+		err = errors.Errorf("unknown OS %v - this should not have happened", osFamily)
 	}
 
-	if !foundPackageManager && !ms.suppressNoPackageWarnings {
-		ms.log.Warnf("No supported package managers found. None of %v, %v, %v exist.",
-			rpmPath, dpkgPath, homebrewCellarPath)
-
-		// Only warn once at the start of Auditbeat.
-		ms.suppressNoPackageWarnings = true
-	}
-
-	return packages, nil
+	return
 }
 
 func listDebPackages() ([]*Package, error) {
-	dpkgStatusFile := filepath.Join(dpkgPath, "status")
-
 	file, err := os.Open(dpkgStatusFile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error opening %s", dpkgStatusFile)

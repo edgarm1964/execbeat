@@ -52,7 +52,6 @@ func TestConfig(t *testing.T) {
 				},
 				EscapeHTML: false,
 				Index:      "bar",
-				Port:       5044,
 			},
 		},
 		"config given": {
@@ -77,8 +76,14 @@ func TestConfig(t *testing.T) {
 				},
 				EscapeHTML: false,
 				Index:      "beat-index",
-				Port:       5044,
 			},
+		},
+		"removed config setting": {
+			config: common.MustNewConfigFrom(common.MapStr{
+				"port": "8080",
+			}),
+			expectedConfig: nil,
+			err:            true,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

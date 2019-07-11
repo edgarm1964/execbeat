@@ -174,11 +174,15 @@ func (d *Provider) generateMetaDocker(event bus.Event) (*docker.Container, *dock
 			"labels": labelMap,
 		},
 		Metadata: common.MapStr{
+			"container": common.MapStr{
+				"id":   container.ID,
+				"name": container.Name,
+				"image": common.MapStr{
+					"name": container.Image,
+				},
+			},
 			"docker": common.MapStr{
 				"container": common.MapStr{
-					"id":     container.ID,
-					"name":   container.Name,
-					"image":  container.Image,
 					"labels": metaLabelMap,
 				},
 			},

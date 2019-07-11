@@ -135,10 +135,11 @@ func loadPipeline(esClient PipelineLoader, pipelineID string, content map[string
 	return nil
 }
 
-// setECSProcessors removes ECS-specific versions from processors in versions not supporting them
+// setECSProcessors sets required ECS options in processors when filebeat version is >= 7.0.0
+// and ES is 6.7.X to ease migration to ECS.
 func setECSProcessors(esVersion common.Version, pipelineID string, content map[string]interface{}) error {
-	ecsFlagVersion := common.MustNewVersion("6.7.0")
-	if !esVersion.LessThan(ecsFlagVersion) {
+	ecsVersion := common.MustNewVersion("7.0.0")
+	if !esVersion.LessThan(ecsVersion) {
 		return nil
 	}
 
@@ -151,14 +152,18 @@ func setECSProcessors(esVersion common.Version, pipelineID string, content map[s
 		return fmt.Errorf("'processors' in pipeline '%s' expected to be a list, found %T", pipelineID, p)
 	}
 
+	minUserAgentVersion := common.MustNewVersion("6.7.0")
 	for _, p := range processors {
 		processor, ok := p.(map[string]interface{})
 		if !ok {
 			continue
 		}
 		if options, ok := processor["user_agent"].(map[string]interface{}); ok {
-			logp.Debug("modules", "Removing 'ecs' option in user_agent processor for field '%v' in pipeline '%s' as it is not supported in Elasticsearch %v", options["field"], pipelineID, esVersion)
-			delete(options, "ecs")
+			if esVersion.LessThan(minUserAgentVersion) {
+				return fmt.Errorf("user_agent processor requires option 'ecs: true', but Elasticsearch %v does not support this option (Elasticsearch %v or newer is required)", esVersion, minUserAgentVersion)
+			}
+			logp.Debug("modules", "Setting 'ecs: true' option in user_agent processor for field '%v' in pipeline '%s'", options["field"], pipelineID)
+			options["ecs"] = true
 		}
 	}
 	return nil
@@ -209,20 +214,10 @@ func interpretError(initialErr error, body []byte) error {
 		strings.HasPrefix(response.Error.RootCause[0].Reason, "No processor type exists with name") &&
 		response.Error.RootCause[0].Header.ProcessorType != "" {
 
-		plugins := map[string]string{
-			"geoip":      "ingest-geoip",
-			"user_agent": "ingest-user-agent",
-		}
-		plugin, ok := plugins[response.Error.RootCause[0].Header.ProcessorType]
-		if !ok {
-			return fmt.Errorf("This module requires an Elasticsearch plugin that provides the %s processor. "+
-				"Please visit the Elasticsearch documentation for instructions on how to install this plugin. "+
-				"Response body: %s", response.Error.RootCause[0].Header.ProcessorType, body)
-		}
+		return fmt.Errorf("This module requires an Elasticsearch plugin that provides the %s processor. "+
+			"Please visit the Elasticsearch documentation for instructions on how to install this plugin. "+
+			"Response body: %s", response.Error.RootCause[0].Header.ProcessorType, body)
 
-		return fmt.Errorf("This module requires the %s plugin to be installed in Elasticsearch. "+
-			"You can install it using the following command in the Elasticsearch home directory:\n"+
-			"    sudo bin/elasticsearch-plugin install %s", plugin, plugin)
 	}
 
 	// older ES version?

@@ -19,7 +19,6 @@ package stats
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -39,9 +38,8 @@ func init() {
 }
 
 const (
-	statsPath             = "api/stats"
-	settingsPath          = "api/settings"
-	usageCollectionPeriod = 24 * time.Hour
+	statsPath    = "api/stats"
+	settingsPath = "api/settings"
 )
 
 var (
@@ -55,10 +53,8 @@ var (
 // MetricSet type defines all fields of the MetricSet
 type MetricSet struct {
 	*kibana.MetricSet
-	statsHTTP            *helper.HTTP
-	settingsHTTP         *helper.HTTP
-	usageLastCollectedOn time.Time
-	isUsageExcludable    bool
+	statsHTTP    *helper.HTTP
+	settingsHTTP *helper.HTTP
 }
 
 // New create a new instance of the MetricSet
@@ -120,8 +116,6 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		ms,
 		statsHTTP,
 		settingsHTTP,
-		time.Time{},
-		kibana.IsUsageExcludable(kibanaVersion),
 	}, nil
 }
 
@@ -131,64 +125,50 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 func (m *MetricSet) Fetch(r mb.ReporterV2) {
 	now := time.Now()
 
-	err := m.fetchStats(r, now)
+	m.fetchStats(r, now)
+	if m.XPackEnabled {
+		m.fetchSettings(r, now)
+	}
+}
+
+func (m *MetricSet) fetchStats(r mb.ReporterV2, now time.Time) {
+	content, err := m.statsHTTP.FetchContent()
 	if err != nil {
-		if m.XPackEnabled {
-			m.Log.Error(err)
-		} else {
-			elastic.ReportAndLogError(err, r, m.Log)
-		}
+		elastic.ReportAndLogError(err, r, m.Log)
 		return
 	}
 
 	if m.XPackEnabled {
-		err = m.fetchSettings(r, now)
+		intervalMs := m.calculateIntervalMs()
+		err = eventMappingStatsXPack(r, intervalMs, now, content)
 		if err != nil {
 			m.Log.Error(err)
+			return
 		}
-	}
-}
-
-func (m *MetricSet) fetchStats(r mb.ReporterV2, now time.Time) error {
-	// Collect usage stats only once every usageCollectionPeriod
-	if m.isUsageExcludable {
-		origURI := m.statsHTTP.GetURI()
-		defer m.statsHTTP.SetURI(origURI)
-
-		shouldCollectUsage := m.shouldCollectUsage(now)
-		if shouldCollectUsage {
-			m.usageLastCollectedOn = now
-		}
-		m.statsHTTP.SetURI(origURI + "&exclude_usage=" + strconv.FormatBool(!shouldCollectUsage))
-	}
-
-	content, err := m.statsHTTP.FetchContent()
-	if err != nil {
-		return err
-	}
-
-	if m.XPackEnabled {
-		intervalMs := m.calculateIntervalMs()
-		return eventMappingStatsXPack(r, intervalMs, now, content)
 	} else {
-		return eventMapping(r, content)
+		err = eventMapping(r, content)
+		if err != nil {
+			elastic.ReportAndLogError(err, r, m.Log)
+			return
+		}
 	}
 }
 
-func (m *MetricSet) fetchSettings(r mb.ReporterV2, now time.Time) error {
+func (m *MetricSet) fetchSettings(r mb.ReporterV2, now time.Time) {
 	content, err := m.settingsHTTP.FetchContent()
 	if err != nil {
-		return err
+		m.Log.Error(err)
+		return
 	}
 
 	intervalMs := m.calculateIntervalMs()
-	return eventMappingSettingsXPack(r, intervalMs, now, content)
+	err = eventMappingSettingsXPack(r, intervalMs, now, content)
+	if err != nil {
+		m.Log.Error(err)
+		return
+	}
 }
 
 func (m *MetricSet) calculateIntervalMs() int64 {
 	return m.Module().Config().Period.Nanoseconds() / 1000 / 1000
-}
-
-func (m *MetricSet) shouldCollectUsage(now time.Time) bool {
-	return now.Sub(m.usageLastCollectedOn) > usageCollectionPeriod
 }

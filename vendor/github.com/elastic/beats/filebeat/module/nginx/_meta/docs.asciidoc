@@ -12,10 +12,6 @@ include::../include/what-happens.asciidoc[]
 [float]
 === Compatibility
 
-With Elasticsearch < 6.7, this module requires the
-{plugins}/ingest-user-agent.html[ingest-user-agent] and
-{plugins}/ingest-geoip.html[ingest-geoip] Elasticsearch plugins.
-
 The Nginx module was tested with logs from version 1.10.
 
 On Windows, the module was tested with Nginx installed from the Chocolatey

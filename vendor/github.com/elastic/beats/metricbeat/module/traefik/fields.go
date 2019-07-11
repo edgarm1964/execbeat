@@ -24,12 +24,13 @@ import (
 )
 
 func init() {
-	if err := asset.SetFields("metricbeat", "traefik", Asset); err != nil {
+	if err := asset.SetFields("metricbeat", "traefik", asset.ModuleFieldsPri, AssetTraefik); err != nil {
 		panic(err)
 	}
 }
 
-// Asset returns asset data
-func Asset() string {
-	return "eJy00cFuozAQBuA7T/Erlz1l985hpRz3sFVVtefImIG4AY81Y6Lm7SsTSAhFadSqc/QYz8c/a+zpmCOKocrtMyC62FCO1XCyyoCS1IoL0bHP8TcDgOdTF0IHEiUE4bcj/qBhU6IwjfGWBC1FcVYzQKgho5SjNhlQOWpKzfuX1vCmpakgVTyGdFm4C8PJAuIrkFTT8VPCjkwTd+fjJcUNSar/pzngIhrnqUQl3I7GXzpMwObxH8iXgZ2Pk++vQxprrp2KuxBdS7+V7FV7lDfs61njBj7VS/8guDoH67zGFCKch5JlX+oiRUgDe6VFyDzCOyRPw3uz3d1KZcqx3F1l+2kwd5BSPXRtQZICGn94LrsYzKHe9vvpPt75vmRzIDE1nR3oN+c8WmeFl1Y1tWk0sdOt5XK+sYuNi1eySyGeGtsfyBKBZLCht70HAAD//64VOQ4="
+// AssetTraefik returns asset data.
+// This is the base64 encoded gzipped contents of ../metricbeat/module/traefik.
+func AssetTraefik() string {
+	return "eJy00bFu2zAQBuBdT/HDS4ECdncNBTx2aFEUzWxQ1ElmLPGIO8qI3z6gLDmyojhGgtzIo3if/lvjQKccUQxV7pAB0cWGcqyGk1UGlKRWXIiOfY6fGQD8P3chdCRRQhB+OuEHGjYlCtMYb0nQUhRnNQOEGjJKOWqTAZWjptS8f2kNb1qaClLFU0iXhbswnCwgPgJJNR0/JezJNHF/OV5S3JCk+n2eAy6icZ5KVMLtaPymwwRs//4C+TKw83Hy/XVIY821U3EXomtpo2Sv2qO8YV/PGjfwqR76B8HVJVjnNaYQ4TyULPtSFylCGtgrLULmEd4h+Te8N9vdrVSmHMvdVbbvBnMHKdWfri1IUkDjD89lLwZzrHf9frrXdz4v2R5JTE0XB/rNOY/WWeGlVU1tGk3sdGe5JN18f5PHxSPZpRzPjd0XxIlAMvCQeNlzAAAA//9iMTnZ"
 }

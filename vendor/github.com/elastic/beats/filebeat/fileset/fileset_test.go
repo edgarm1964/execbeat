@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"text/template"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -268,10 +269,21 @@ func TestGetPipelineConvertTS(t *testing.T) {
 			marshaled, err := json.Marshal(pipeline.contents)
 			require.NoError(t, err)
 			if cfg.Timezone {
-				assert.Contains(t, string(marshaled), "beat.timezone")
+				assert.Contains(t, string(marshaled), "event.timezone")
 			} else {
-				assert.NotContains(t, string(marshaled), "beat.timezone")
+				assert.NotContains(t, string(marshaled), "event.timezone")
 			}
 		})
 	}
+}
+
+func TestGetTemplateFunctions(t *testing.T) {
+	vars := map[string]interface{}{
+		"builtin": map[string]interface{}{},
+	}
+	templateFunctions, err := getTemplateFunctions(vars)
+	assert.NoError(t, err)
+	assert.IsType(t, template.FuncMap{}, templateFunctions)
+	assert.Len(t, templateFunctions, 1)
+	assert.Contains(t, templateFunctions, "IngestPipeline")
 }

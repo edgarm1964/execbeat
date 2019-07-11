@@ -41,6 +41,7 @@ var debugf = logp.MakeDebug("redis")
 const (
 	defaultWaitRetry    = 1 * time.Second
 	defaultMaxWaitRetry = 60 * time.Second
+	defaultPort         = 6379
 )
 
 func init() {
@@ -48,6 +49,7 @@ func init() {
 }
 
 func makeRedis(
+	_ outputs.IndexManager,
 	beat beat.Info,
 	observer outputs.Observer,
 	cfg *common.Config,
@@ -57,8 +59,9 @@ func makeRedis(
 		cfg.SetString("index", -1, beat.Beat)
 	}
 
-	if cfg.HasField("port") {
-		cfgwarn.Deprecate("7.0.0", "The Redis outputs port setting")
+	err := cfgwarn.CheckRemoved6xSettings(cfg, "port")
+	if err != nil {
+		return outputs.Fail(err)
 	}
 
 	// ensure we have a `key` field in settings
@@ -121,7 +124,7 @@ func makeRedis(
 			return outputs.Fail(err)
 		}
 
-		conn, err := transport.NewClient(transp, "tcp", host, config.Port)
+		conn, err := transport.NewClient(transp, "tcp", host, defaultPort)
 		if err != nil {
 			return outputs.Fail(err)
 		}

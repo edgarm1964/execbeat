@@ -37,6 +37,7 @@ import (
 	errw "github.com/pkg/errors"
 
 	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/common/cfgwarn"
 	"github.com/elastic/beats/libbeat/logp"
 	mlimporter "github.com/elastic/beats/libbeat/ml-importer"
 )
@@ -110,7 +111,6 @@ type manifest struct {
 	Vars            []map[string]interface{} `config:"var"`
 	IngestPipeline  []string                 `config:"ingest_pipeline"`
 	Input           string                   `config:"input"`
-	Prospector      string                   `config:"prospector"`
 	MachineLearning []struct {
 		Name       string `config:"name"`
 		Job        string `config:"job"`
@@ -123,14 +123,16 @@ type manifest struct {
 }
 
 func newManifest(cfg *common.Config) (*manifest, error) {
+	if err := cfgwarn.CheckRemoved6xSetting(cfg, "prospector"); err != nil {
+		return nil, err
+	}
+
 	var manifest manifest
 	err := cfg.Unpack(&manifest)
 	if err != nil {
 		return nil, err
 	}
-	if manifest.Prospector != "" {
-		manifest.Input = manifest.Prospector
-	}
+
 	return &manifest, nil
 }
 
@@ -470,7 +472,7 @@ func (fs *Fileset) GetMLConfigs() []mlimporter.MLConfig {
 	var mlConfigs []mlimporter.MLConfig
 	for _, ml := range fs.manifest.MachineLearning {
 		mlConfigs = append(mlConfigs, mlimporter.MLConfig{
-			ID:           fmt.Sprintf("filebeat-%s-%s-%s", fs.mcfg.Module, fs.name, ml.Name),
+			ID:           fmt.Sprintf("filebeat-%s-%s-%s_ecs", fs.mcfg.Module, fs.name, ml.Name),
 			JobPath:      filepath.Join(fs.modulePath, fs.name, ml.Job),
 			DatafeedPath: filepath.Join(fs.modulePath, fs.name, ml.Datafeed),
 			MinVersion:   ml.MinVersion,

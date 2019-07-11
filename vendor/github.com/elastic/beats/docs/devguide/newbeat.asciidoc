@@ -154,7 +154,7 @@ Beat Path [github.com/{github id}/{beat name}]:
 Firstname Lastname: {Full Name}
 ---------
 
-The Beat generator creates a directory called `countbeat` inside of your project folder.
+The Beat generator creates a directory called `countbeat` inside of your project folder (e.g. {project folder}/github.com/{github id}/countbeat).
 
 You now have a raw template of the Beat, but you still need to <<setting-up-beat,fetch dependencies and set up the Beat>>.
 
@@ -184,7 +184,7 @@ To compile the Beat, make sure you are in the Beat directory (`$GOPATH/src/githu
 
 [source,shell]
 ---------
-make
+mage build
 ---------
 
 NOTE: we don't support the `-j` option for make at the moment.
@@ -477,11 +477,12 @@ import (
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/cmd"
+	"github.com/elastic/beats/libbeat/cmd/instance"
 
 	"github.com/kimjmin/countbeat/beater"
 )
 
-var RootCmd = cmd.GenRootCmd("countbeat", "", beater.New)
+var RootCmd = cmd.GenRootCmdWithSettings(beater.New, instance.Settings{Name: "countbeat"})
 
 func main() {
 	if err := RootCmd.Execute(); err != nil {

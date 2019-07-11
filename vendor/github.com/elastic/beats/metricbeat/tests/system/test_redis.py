@@ -44,7 +44,8 @@ class Test(metricbeat.BaseTest):
         self.assertEqual(len(output), 1)
         evt = output[0]
 
-        self.assertItemsEqual(self.de_dot(REDIS_FIELDS), evt.keys())
+        fields = REDIS_FIELDS + ["process", "os"]
+        self.assertItemsEqual(self.de_dot(fields), evt.keys())
         redis_info = evt["redis"]["info"]
         self.assertItemsEqual(self.de_dot(REDIS_INFO_FIELDS), redis_info.keys())
         self.assertItemsEqual(self.de_dot(CLIENTS_FIELDS), redis_info["clients"].keys())
@@ -60,7 +61,7 @@ class Test(metricbeat.BaseTest):
 
         # At least one event must be inserted so db stats exist
         r = redis.StrictRedis(
-            host=self.compose_hosts()[0],
+            host=self.get_host(),
             port=os.getenv('REDIS_PORT', '6379'),
             db=0)
         r.flushall()
@@ -95,7 +96,7 @@ class Test(metricbeat.BaseTest):
 
         # At least one event must be inserted so db stats exist
         r = redis.StrictRedis(
-            host=self.compose_hosts()[0],
+            host=self.get_host(),
             port=os.getenv('REDIS_PORT', '6379'),
             db=0)
         r.flushall()
@@ -130,7 +131,7 @@ class Test(metricbeat.BaseTest):
         Test local processors for Redis info event.
         """
         fields = ["clients", "cpu"]
-        eventFields = ['beat', 'metricset', 'event']
+        eventFields = ['beat', 'metricset', 'service', 'event']
         eventFields += ['redis.info.' + f for f in fields]
         self.render_config_template(modules=[{
             "name": "redis",
@@ -158,8 +159,13 @@ class Test(metricbeat.BaseTest):
         self.assertItemsEqual(self.de_dot(CPU_FIELDS), redis_info["cpu"].keys())
 
     def get_hosts(self):
-        return [self.compose_hosts()[0] + ':' +
+        return [self.get_host() + ':' +
                 os.getenv('REDIS_PORT', '6379')]
+
+    def get_host(self):
+        if len(self.compose_hosts()) > 0:
+            return self.compose_hosts()[0]
+        return "localhost"
 
 
 class TestRedis4(Test):
