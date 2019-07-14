@@ -40,7 +40,39 @@ Pre-compiled binaries for different operating systems are available for [downloa
 Install the package for your operation system by running the respective package manager or unzipping the package.
 
 ### Configuration
-Adjust the `execbeat.yml` configuration file to your needs. You may take `execbeat.full.yml` as an example containing all possible configuration values.
+Adjust the `execbeat.yml` configuration file to your needs. You may take `execbeat.reference.yml` as an example containing all possible configuration values.
+
+#### Simple example
+The list is a [YAML](http://yaml.org/) array, so each command begins with a dash (`-`). You can specify multiple commands, and you can specify the same command type more than once. For example:
+
+```
+execbeat.commands:
+- command: date
+  period: 2m
+  args: '+%Y%m%dT%H%M%S'
+  fields:
+    app: MyApplication
+    env: test
+  fields_under_root: true
+```
+
+#### Decode JSON fields example
+If a command returns a [JSON](http://json.org) formatted string, it is possible to use processors to split the fields of such a string into separate fields. Example:
+
+```
+execbeat.commands:
+- command: /usr/local/bin/a-json-script.sh
+  period: 5m
+  # args:
+
+processors:
+ - decode_json_fields:
+     fields: ["stdout"]
+     process_array: true
+     max_depth: 1
+     target: ""
+     overwrite_keys: false
+```
 
 ### Running
 In order to start Execbeat please use the respective startup script, e.g. `/usr/bin/execbeat.sh`.
