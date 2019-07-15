@@ -40,20 +40,20 @@ Pre-compiled binaries for different operating systems are available for [downloa
 Install the package for your operation system by running the respective package manager or unzipping the package.
 
 ### Configuration
-Adjust the `execbeat.yml` configuration file to your needs. You may take `execbeat.reference.yml` as an example containing all possible configuration values.
+Adjust the `execbeat.yml` configuration file to your needs. You may take `execbeat.reference.yml` as an example containing all possible configuration values. The output of the executed command is stored in the strings `stdout` and `stderr,` The exit code is stored in `extiCode.` The command itself is stored in `command.` All fields can be accessed using the `processors` Beats provides. See [Decode JSON fields example](#decode-json-fields-example)
 
 #### Simple example
 The list is a [YAML](http://yaml.org/) array, so each command begins with a dash (`-`). You can specify multiple commands, and you can specify the same command type more than once. For example:
 
 ```
 execbeat.commands:
-- command: date
-  period: 2m
-  args: '+%Y%m%dT%H%M%S'
-  fields:
-    app: MyApplication
-    env: test
-  fields_under_root: true
+  - command: date
+    period: 2m
+    args: '+%Y%m%dT%H%M%S'
+    fields:
+      app: MyApplication
+      env: test
+    fields_under_root: true
 ```
 
 #### Decode JSON fields example
@@ -61,21 +61,23 @@ If a command returns a [JSON](http://json.org) formatted string, it is possible 
 
 ```
 execbeat.commands:
-- command: /usr/local/bin/a-json-script.sh
-  period: 5m
-  # args:
+  - command: /usr/local/bin/a-json-script.sh
+    period: 5m
+    # args:
 
 processors:
- - decode_json_fields:
-     fields: ["stdout"]
-     process_array: true
-     max_depth: 1
-     target: ""
-     overwrite_keys: false
+  - decode_json_fields:
+      fields: ["stdout"]
+      process_array: true
+      max_depth: 1
+      target: ""
+      overwrite_keys: false
 ```
 
+Visit [processors](https://www.elastic.co/guide/en/beats/filebeat/current/defining-processors.html) for more information on processors and their use.
+
 ### Running
-In order to start Execbeat please use the respective startup script, e.g. `/usr/bin/execbeat.sh`.
+In order to start Execbeat please use the respective startup script, e.g. `/usr/bin/execbeat.sh`. For more information, run `execbeat --help`
 
 ### Starting Execbeat as Service
 Where supported Execbeat can be started also using the respetive service scripts, e.g. `etc/init.d/execbeat`.
@@ -84,7 +86,7 @@ Where supported Execbeat can be started also using the respetive service scripts
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.11.5
+* [Golang](https://golang.org/dl/) = 1.11.5
 * [Glide](https://github.com/Masterminds/glide) >= 0.13.0
 * [Mage](https://magefile.org) >= 1.8.0
 
