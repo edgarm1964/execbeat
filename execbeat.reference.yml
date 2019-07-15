@@ -1,9 +1,7 @@
 ######################## Execbeat Configuration Example ########################
 
 ############################## Execbeat ########################################
-execbeat:
-
-  commands:
+execbeat.commands:
     # Each - Commands to execute.
     -
       # Optional cron expression, defines when to execute the command.

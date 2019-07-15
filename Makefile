@@ -10,6 +10,8 @@ GOBUILD_FLAGS=-i -ldflags "-X $(BEAT_PATH)/vendor/github.com/elastic/beats/libbe
 MAGE_IMPORT_PATH=${BEAT_PATH}/vendor/github.com/magefile/mage
 NO_COLLECT=true
 
+.DEFAULT_GOAL:=$(BEAT_NAME)
+
 # Path to the libbeat Makefile
 -include $(LIBBEAT_MAKEFILE)
 
