@@ -28,7 +28,7 @@ Execbeat is built against the following Beats versions and if execbeat was able 
 | Beats 6.8.0 | OK | OK | OK | OK | OK |
 | Beats 6.8.1 | OK | OK | OK | OK | OK |
 | Beats 7.0.0 | OK | OK | OK | OK | OK |
-| Beats 7.1.1 | N/T | N/T | N/T | N/T | N/T |
+| Beats 7.1.1 | OK | OK | OK | OK | OK |
 
 N/T: Not Tested
 
